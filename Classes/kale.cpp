@@ -114,7 +114,7 @@ void kaleApp::Init()
 	screen_dark_corner_mask_ = new SpriteActor(320, 480);
 	screen_dark_corner_mask_->AddToScene(mask_layer);
 	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 1));
-	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
+	screen_dark_corner_mask_->SetMaterial("media/mask_dark2.png", FILTER_LINEAR, FILTER_LINEAR);
 	cam_->AddChild(screen_dark_corner_mask_);
 	
 	atmosphere_mask_ = new SpriteActor(kBoundaryHalfSize * 2, kBoundaryHalfSize * 2, 0, kBoundaryHalfSize);
