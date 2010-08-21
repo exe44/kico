@@ -1,0 +1,22 @@
+//
+// Prefix header for all source files of the 'kale' target in the 'kale' project
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+    #import <UIKit/UIKit.h>
+#endif
+
+
+#include "pch.h"
+
+#define HOIMI_PLATFORM_WIN32	1
+#define HOIMI_PLATFORM_MAC		2
+#define HOIMI_PLATFORM_IPHONE	3
+#define HOIMI_PLATFORM_LINUX	4
+#define HOIMI_PLATFORM HOIMI_PLATFORM_IPHONE
+#define SET_LOGGER(logger_name)
+#define SET_ROOT_LOGGER
+#define LOG4CXX_ERROR(logger, descript)
+#define LOG4CXX_WARN(logger, descript)
+#define LOG4CXX_INFO(logger, descript)
