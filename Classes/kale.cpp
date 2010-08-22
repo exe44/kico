@@ -106,20 +106,21 @@ void kaleApp::Init()
 	
 	//
 	
-	mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 4, kBoundaryHalfSize * 2 + 4, 0, kBoundaryHalfSize / 0.8f);
+	//mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 24, kBoundaryHalfSize * 2 + 24);
+	mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 8, kBoundaryHalfSize * 2 + 8);
 	mirror_dark_corner_mask_->AddToScene(ui_layer);
-	mirror_dark_corner_mask_->SetPos(Vector3(0, 0, 4));
+	mirror_dark_corner_mask_->SetPos(Vector3(0, kBoundaryHalfSize * 0.7f, 2));
 	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
 	
 	screen_dark_corner_mask_ = new SpriteActor(320, 480);
 	screen_dark_corner_mask_->AddToScene(mask_layer);
-	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 1));
-	screen_dark_corner_mask_->SetMaterial("media/mask_dark2.png", FILTER_LINEAR, FILTER_LINEAR);
+	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
+	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
 	cam_->AddChild(screen_dark_corner_mask_);
 	
 	atmosphere_mask_ = new SpriteActor(kBoundaryHalfSize * 2, kBoundaryHalfSize * 2, 0, kBoundaryHalfSize);
 	atmosphere_mask_->AddToScene(mask_layer);
-	atmosphere_mask_->SetPos(Vector3(0, 0, 3));
+	atmosphere_mask_->SetPos(Vector3(0, 0, 1));
 	atmosphere_mask_->SetDepthWrite(false);
 	atmosphere_mask_->BlendAdd();
 	
@@ -241,7 +242,7 @@ void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
 		if (now_zoom > kCameraZoomMax) now_zoom = kCameraZoomMax;
 		cam_->SetOrthoZoom(now_zoom);
 		
-		printf("zoom = %f\n", now_zoom);
+		//printf("zoom = %f\n", now_zoom);
 	}
 	
 	distance = now_distance;
@@ -351,11 +352,11 @@ void kaleApp::ResetCollisionObjs()
 		}
 		else if (shape_type == 1)
 		{
-			size = RangeRandom(0.75f, 1.5f);
+			size = RangeRandom(0.75f, 1.25f);
 			b2Vec2 vertices[3];
-			vertices[0].Set(-size, -size);
-			vertices[1].Set(size, -size);
-			vertices[2].Set(0.0f, size * sqrt(3) - size);
+			vertices[0].Set(-size, -size * 0.5f);
+			vertices[1].Set(size, -size * 0.5f);
+			vertices[2].Set(0.0f, size);
 			poly_shape.Set(vertices, 3);
 			fixture_def.shape = &poly_shape;
 		}
@@ -386,8 +387,8 @@ void kaleApp::ResetCollisionObjs()
 		}
 		else if (shape_type == 1)
 		{
-			obj = new Square(size - 0.2f);
-			obj->SetMaterial("media/triangle2.png", FILTER_LINEAR, FILTER_LINEAR);
+			obj = new Square(size - 0.15f);
+			obj->SetMaterial("media/triangle3.png", FILTER_LINEAR, FILTER_LINEAR);
 		}
 		else
 		{

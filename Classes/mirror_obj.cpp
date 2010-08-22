@@ -33,8 +33,8 @@ void TriangleMirror::UpdateVertexBuffer()
 	
 	Vector2 unit_uv_(1.0f, 1.0f);
 	
-	float top_v = 0.85f;
-	float bottom_v = 0.15f;
+	float top_v = 0.875f;
+	float bottom_v = 0.125f;
 	float center = 0.5f;
 	
 	int v_count = row_ * col_ * 3;
@@ -47,17 +47,17 @@ void TriangleMirror::UpdateVertexBuffer()
 	
 	bool is_invert;
 	Vector2 uv[3];
-	uv[0] = Vector2(center, bottom_v);
-	uv[1] = Vector2(center - (top_v - bottom_v) / sqrt(3.0f), top_v);
-	uv[2] = Vector2(center + (top_v - bottom_v) / sqrt(3.0f), top_v);
+	uv[2] = Vector2(center, top_v);
+	uv[0] = Vector2(center - (top_v - bottom_v) / sqrt(3.0f), bottom_v);
+	uv[1] = Vector2(center + (top_v - bottom_v) / sqrt(3.0f), bottom_v);
 	
 	int start_index;
 	Vector2 uv_now[3];
 	
 	for (int i = 0; i < row_; ++i)
 	{
-		if (i % 2) start_index = 1;
-		else start_index = 0;
+		if (i % 2) start_index = 0;
+		else start_index = 1;
 		
 		uv_now[0] = uv[start_index % 3];
 		uv_now[1] = uv[(start_index + 1) % 3];
@@ -65,7 +65,7 @@ void TriangleMirror::UpdateVertexBuffer()
 		
 		for (int j = 0; j < col_; ++j)
 		{
-			is_invert = j % 2;
+			is_invert = (j % 2 == 0);
 			if (i % 2) is_invert = !is_invert;
 			
 			// position
