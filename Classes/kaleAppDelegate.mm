@@ -40,7 +40,7 @@ static EAGLView* gl_view;
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
 	// init ERI
-	ERI::Root::Ins().Init();
+	ERI::Root::Ins().Init(false);
 	ERI::Root::Ins().renderer()->SetViewOrientation(ERI::PORTRAIT_HOME_BOTTOM);
 	
 	// create the OpenGL view and add it to the window

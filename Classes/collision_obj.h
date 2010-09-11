@@ -12,9 +12,28 @@
 
 #include "scene_actor.h"
 
+#pragma mark CollisionObj
+
+class CollisionObj : public ERI::SceneActor
+{
+public:
+	CollisionObj();
+	virtual ~CollisionObj();
+	
+	void Update(float delta_time);
+	void OnCollisionStart(float approach_velocity);
+	
+	ERI::SceneActor* glow_obj() { return glow_obj_; }
+	void set_glow_obj(ERI::SceneActor* obj) { glow_obj_ = obj; }
+
+private:
+	ERI::SceneActor*	glow_obj_;
+	float				glow_remain_time_;
+};
+
 #pragma mark Square
 
-class Square : public ERI::SceneActor
+class Square : public CollisionObj
 {
 public:
 	Square(float half_edge);
@@ -29,7 +48,7 @@ private:
 
 #pragma mark NonUniformSquare
 
-class NonUniformSquare : public ERI::SceneActor
+class NonUniformSquare : public CollisionObj
 {
 public:
 	NonUniformSquare(float half_x, float half_y);

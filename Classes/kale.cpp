@@ -78,9 +78,11 @@ void kaleApp::Init()
 	
 	//
 	
-	cam_ = new CameraActor;
+	cam_ = new CameraActor(/*CameraActor::PERSPECTIVE*/);
 	cam_->AddToScene();
-	//cam_->SetOrthoZoom(kCameraZoomMin);
+	//cam_->SetOrthoZoom(10);
+	//cam_->SetPos(Vector3(400, 400, 800));
+	//cam_->SetLookAt(Vector3(0, 0, 0));
 	Root::Ins().scene_mgr()->SetCurrentCam(cam_);
 	
 	light_ = new LightActor(LightActor::POINT);
@@ -198,7 +200,11 @@ void kaleApp::Update(float delta_time)
 
 	// create mirror
 	
-	for (int i = 0; i < collision_objs_.size(); ++i) collision_objs_[i]->set_visible(true);
+	for (int i = 0; i < collision_objs_.size(); ++i)
+	{
+		collision_objs_[i]->set_visible(true);
+		collision_objs_[i]->Update(delta_time);
+	}
 	atmosphere_mask_->set_visible(true);
 	mirror_dark_corner_mask_->set_visible(true);
 	mirror_->set_visible(false);
@@ -210,7 +216,11 @@ void kaleApp::Update(float delta_time)
 	
 	// show mirror
 	
-	for (int i = 0; i < collision_objs_.size(); ++i) collision_objs_[i]->set_visible(false);
+	for (int i = 0; i < collision_objs_.size(); ++i)
+	{
+		collision_objs_[i]->set_visible(false);
+		if (collision_objs_[i]->glow_obj()) collision_objs_[i]->glow_obj()->set_visible(false);
+	}
 	atmosphere_mask_->set_visible(false);
 	mirror_dark_corner_mask_->set_visible(false);
 	mirror_->set_visible(true);
@@ -267,7 +277,7 @@ void kaleApp::Accelerate(float g_x, float g_y, float g_z)
 
 void kaleApp::InitPhysics()
 {
-	b2Vec2 gravity(0, 0);
+	b2Vec2 gravity(0, -10);
 	bool do_sleep = true;
 	world_ = new b2World(gravity, do_sleep);
 	contact_listener_ = new KaleContactListener;
@@ -326,7 +336,7 @@ void kaleApp::ResetCollisionObjs()
 	bool mix_shape = (shape_type == 3);
 	
 	b2Body* body;
-	SceneActor* obj;
+	CollisionObj* obj;
 	
 	for (int i = 0; i < kCollisionObjNum; ++i)
 	{
@@ -380,26 +390,49 @@ void kaleApp::ResetCollisionObjs()
 		
 		//
 		
+		CollisionObj* glow_obj;
+		
 		if (shape_type == 0)
 		{
 			obj = new NonUniformSquare(size_x - 0.05f, size_y - 0.05f);
 			obj->SetMaterial("media/square2.png", FILTER_LINEAR, FILTER_LINEAR);
+			
+			glow_obj = new NonUniformSquare(size_x, size_y);
+			glow_obj->SetMaterial("media/square_glow.png", FILTER_LINEAR, FILTER_LINEAR);
 		}
 		else if (shape_type == 1)
 		{
 			obj = new Square(size - 0.15f);
 			obj->SetMaterial("media/triangle3.png", FILTER_LINEAR, FILTER_LINEAR);
+
+			glow_obj = new Square(size);
+			glow_obj->SetMaterial("media/triangle_glow.png", FILTER_LINEAR, FILTER_LINEAR);
 		}
 		else
 		{
 			obj = new Square(size - 0.05f);
 			obj->SetMaterial("media/circle.png", FILTER_LINEAR, FILTER_LINEAR);
+
+			glow_obj = new Square(size);
+			glow_obj->SetMaterial("media/circle_glow.png", FILTER_LINEAR, FILTER_LINEAR);
 		}
+		
+		glow_obj->BlendAdd();
+		glow_obj->SetDepthTest(false);
+		glow_obj->SetDepthWrite(false);
+		glow_obj->set_visible(false);
+		glow_obj->AddToScene(1);
+		obj->AddChild(glow_obj);
+		obj->set_glow_obj(glow_obj);
 		
 		obj->AddToScene();
 		obj->set_accept_light(true);
 		
 		collision_objs_.push_back(obj);
+		
+		//
+		
+		body->SetUserData(obj);
 	}
 	
 	//

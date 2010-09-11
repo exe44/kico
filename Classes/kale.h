@@ -21,10 +21,10 @@ namespace ERI
 	class LightActor;
 	class RenderToTexture;
 	class SpriteActor;
-	class SceneActor;
 	struct Texture;
 }
 
+class CollisionObj;
 class TriangleMirror;
 template<class T>class Morpher;
 class b2World;
@@ -81,7 +81,7 @@ private:
 	
 	ERI::Vector3		accelerator_g_;
 	
-	std::vector<ERI::SceneActor*>	collision_objs_;
+	std::vector<CollisionObj*>	collision_objs_;
 	
 	const ERI::Texture*	atmosphere_texture_;
 	float				atmosphere_u_;

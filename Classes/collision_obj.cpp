@@ -11,6 +11,43 @@
 
 using namespace ERI;
 
+#pragma mark CollisionObj
+
+CollisionObj::CollisionObj() : glow_obj_(NULL), glow_remain_time_(0.0f)
+{
+}
+
+CollisionObj::~CollisionObj()
+{
+	if (glow_obj_) delete glow_obj_;
+}
+
+void CollisionObj::Update(float delta_time)
+{
+	if (!glow_obj_ || glow_remain_time_ <= 0.0f)
+		return;
+
+	glow_remain_time_ -= delta_time;
+	
+	if (glow_remain_time_ <= 0.0f)
+	{
+		//glow_obj_->set_visible(false);
+	}
+	else
+	{
+		glow_obj_->SetColor(GetColor() * (glow_remain_time_ / 1.0f) * 1.0f);
+		glow_obj_->set_visible(true);
+	}
+}
+
+void CollisionObj::OnCollisionStart(float approach_velocity)
+{
+	if (!glow_obj_)
+		return;
+	
+	glow_remain_time_ = 1.0f;
+	glow_obj_->SetColor(GetColor() * 1.0f);
+}
 
 #pragma mark Square
 

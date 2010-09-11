@@ -12,6 +12,8 @@
 #include "math_helper.h"
 #include "audio_manager.h"
 
+#include "collision_obj.h"
+
 using namespace ERI;
 
 void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
@@ -38,6 +40,15 @@ void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldMani
 		if (approach_velocity > 0.33f)
 		{
 			Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+			
+			if (bodyA->GetUserData())
+			{
+				static_cast<CollisionObj*>(bodyA->GetUserData())->OnCollisionStart(approach_velocity);
+			}
+			if (bodyB->GetUserData())
+			{
+				static_cast<CollisionObj*>(bodyB->GetUserData())->OnCollisionStart(approach_velocity);
+			}
 		}
 	}
 }
