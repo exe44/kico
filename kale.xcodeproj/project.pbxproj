@@ -53,6 +53,7 @@
 		420EDEBC121FAE07004AA074 /* audio_handler_apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 420EDE76121FAE07004AA074 /* audio_handler_apple.mm */; };
 		420EDEBD121FAE07004AA074 /* audio_manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 420EDE77121FAE07004AA074 /* audio_manager.cpp */; };
 		420EDEBE121FAE07004AA074 /* MyOpenALSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 420EDE7A121FAE07004AA074 /* MyOpenALSupport.mm */; };
+		423F03DE123C98A6008FD2BC /* updater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 423F03DD123C98A6008FD2BC /* updater.cpp */; };
 		427773FA121C19EF004CAB6A /* collision_obj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 427773F9121C19EF004CAB6A /* collision_obj.cpp */; };
 		42777402121C19EF004CAB6A /* mirror_obj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42777401121C19EF004CAB6A /* mirror_obj.cpp */; };
 		42B2CF9C121962C900075E3B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42B2CF9B121962C900075E3B /* QuartzCore.framework */; };
@@ -169,6 +170,8 @@
 		420EDE7A121FAE07004AA074 /* MyOpenALSupport.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MyOpenALSupport.mm; sourceTree = "<group>"; };
 		420EDE7B121FAE07004AA074 /* hoimi_singleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hoimi_singleton.h; sourceTree = "<group>"; };
 		420EDE7C121FAE07004AA074 /* hoimi_state_machine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hoimi_state_machine.h; sourceTree = "<group>"; };
+		423F03DC123C98A6008FD2BC /* updater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = updater.h; sourceTree = "<group>"; };
+		423F03DD123C98A6008FD2BC /* updater.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = updater.cpp; sourceTree = "<group>"; };
 		427773F8121C19EF004CAB6A /* collision_obj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = collision_obj.h; sourceTree = "<group>"; };
 		427773F9121C19EF004CAB6A /* collision_obj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = collision_obj.cpp; sourceTree = "<group>"; };
 		42777400121C19EF004CAB6A /* mirror_obj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mirror_obj.h; sourceTree = "<group>"; };
@@ -250,6 +253,8 @@
 				42777407121C19EF004CAB6A /* helper.h */,
 				420ED74E121F8754004AA074 /* contact_listener.h */,
 				420ED74F121F8754004AA074 /* contact_listener.cpp */,
+				423F03DC123C98A6008FD2BC /* updater.h */,
+				423F03DD123C98A6008FD2BC /* updater.cpp */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -626,6 +631,7 @@
 				42E012B51233CF1A00C1BFF9 /* scene_actor.cpp in Sources */,
 				42E012B61233CF1A00C1BFF9 /* scene_mgr.cpp in Sources */,
 				42E012B71233CF1A00C1BFF9 /* texture_mgr.cpp in Sources */,
+				423F03DE123C98A6008FD2BC /* updater.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

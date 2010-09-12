@@ -19,6 +19,7 @@
 #include "helper.h"
 #include "collision_obj.h"
 #include "contact_listener.h"
+#include "updater.h"
 
 using namespace ERI;
 
@@ -40,7 +41,7 @@ enum ObjType
 #pragma mark Testing Usage
 
 static SpriteActor* mirror_texture_sprite;
-static TxtActor* fps_number;
+static NumberActor* fps_number;
 
 static void UpdateFPS(float delta_time)
 {
@@ -51,9 +52,7 @@ static void UpdateFPS(float delta_time)
 	frame_count_timer += delta_time;
 	if (frame_count_timer >= 0.25f)
 	{
-		static char number[8];
-		sprintf(number, "%d", static_cast<int>(frame_count / frame_count_timer));
-		fps_number->SetTxt(number);
+		fps_number->SetNumber(static_cast<int>(frame_count / frame_count_timer));
 		
 		frame_count = 0;
 		frame_count_timer = 0;
@@ -67,7 +66,10 @@ kaleApp* kaleApp::ins_ptr_ = NULL;
 kaleApp::kaleApp() :
 	accelerator_g_(Vector3(0, -1, 0)),
 	mask_layer_(-1),
-	ui_layer_(-1)
+	ui_layer_(-1),
+	ui_layer2_(-1),
+	logo_shower_(NULL),
+	is_menu_mode_(false)
 {
 }
 
@@ -86,6 +88,7 @@ void kaleApp::Init()
 	
 	mask_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
 	ui_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
+	ui_layer2_ = ERI::Root::Ins().scene_mgr()->AddLayer();
 	
 	//
 	
@@ -147,12 +150,11 @@ void kaleApp::Init()
 	
 	//
 	
-	fps_number = new TxtActor("0", "georgia_bold", 24, true);
-	fps_number->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	fps_number->AddToScene(ui_layer_);
-	fps_number->SetPos(120, -200);
-	fps_number->SetColor(Color(1, 1, 1));
-	fps_number->SetDepthTest(false);
+	fps_number = new NumberActor(10, 14, "media/num.png", 5, 7, false);
+	fps_number->AddToScene(ui_layer2_);
+	fps_number->SetPos(Vector3(130, 210, 10));
+	fps_number->SetColor(Color(0.1f, 0.1f, 0.1f));
+	fps_number->BlendAdd();
 	cam_->AddChild(fps_number);
 	
 	//
@@ -163,6 +165,14 @@ void kaleApp::Init()
 	//
 	
 	ResetCollisionObjs();
+	
+	//
+	
+	logo_shower_ = new LogoShower(this);
+	menu_button_ = new MenuButton(this);
+	black_mask_ = new BlackMask(this);
+	black_mask_->FadeOut(2.0f);
+	menu_ = new Menu(this);
 }
 
 void kaleApp::OnTerminate()
@@ -171,6 +181,16 @@ void kaleApp::OnTerminate()
 
 void kaleApp::Release()
 {
+	delete menu_;
+	delete black_mask_;
+	delete menu_button_;
+	
+	if (logo_shower_)
+	{
+		delete logo_shower_;
+		logo_shower_ = NULL;
+	}
+	
 	ClearCollisionObjs();
 	
 	for (int i = 0; i < boundary_bodys_.size(); ++i)
@@ -218,6 +238,10 @@ void kaleApp::Update(float delta_time)
 	mirror_texture_sprite->set_visible(false);
 	screen_dark_corner_mask_->set_visible(false);
 	fps_number->set_visible(false);
+	if (logo_shower_) logo_shower_->Hide();
+	menu_button_->Hide();
+	black_mask_->Hide();
+	menu_->Hide();
 	
 	mirror_texture_->ProcessRender();
 	
@@ -233,12 +257,55 @@ void kaleApp::Update(float delta_time)
 	mirror_->set_visible(true);
 	//mirror_texture_sprite->set_visible(true);
 	screen_dark_corner_mask_->set_visible(true);
-	fps_number->set_visible(true);
+	//fps_number->set_visible(true);
+	if (logo_shower_) logo_shower_->Show();
+	menu_button_->Show();
+	black_mask_->Show();
+	menu_->Show();
+	
+	//
+	
+	if (logo_shower_)
+	{
+		logo_shower_->Update(delta_time);
+		if (logo_shower_->is_finished())
+		{
+			delete logo_shower_;
+			logo_shower_ = NULL;
+		}
+	}
+	
+	menu_button_->Update(delta_time);
+	black_mask_->Update(delta_time);
+	menu_->Update(delta_time);
 }
 
 void kaleApp::Click(int screen_x, int screen_y)
 {
-	ResetCollisionObjs();
+	Vector3 pos = Root::Ins().scene_mgr()->ScreenToWorldPos(screen_x, screen_y);
+	if (menu_button_->button()->IsHit(pos))
+	{
+		if (is_menu_mode_)
+		{
+			menu_button_->FadeOut();
+			black_mask_->FadeOut(0.15f);
+			menu_->FadeOut();
+		}
+		else
+		{
+			menu_button_->FadeIn();
+			black_mask_->FadeIn(0.15f, 0.5f);
+			menu_->FadeIn();
+		}
+		
+		is_menu_mode_ = !is_menu_mode_;
+	}
+	else if (!is_menu_mode_)
+	{
+		menu_button_->FadeInOut();
+		//black_mask_->FadeInOut(0.5f, 0.5f);
+		ResetCollisionObjs();
+	}
 }
 
 void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
@@ -606,4 +673,11 @@ void kaleApp::UpdateAtmosphere(float delta_time)
 	Root::Ins().renderer()->SetBgColor(color * 0.0f);
 	
 	atmosphere_mask_->SetColor(color * 1.0f);
+	
+	//
+	
+	Color menu_color(0.5f, 0.5f, 0.5f);
+	menu_color += color * 0.5f;
+	menu_color.a = menu_button_->button()->GetColor().a;
+	menu_button_->button()->SetColor(menu_color);
 }

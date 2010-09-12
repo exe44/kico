@@ -26,10 +26,14 @@ namespace ERI
 
 class CollisionObj;
 class TriangleMirror;
-template<class T>class Morpher;
+template<class> class Morpher;
 class b2World;
 class b2Body;
 class KaleContactListener;
+class LogoShower;
+class MenuButton;
+class BlackMask;
+class Menu;
 
 class kaleApp : public ERI::InputHandler
 {
@@ -57,6 +61,10 @@ public:
 		if (!ins_ptr_)	ins_ptr_ = new kaleApp();
 		return ins_ptr_;
 	}
+	
+	inline int mask_layer() { return mask_layer_; }
+	inline int ui_layer() { return ui_layer_; }
+	inline int ui_layer2() { return ui_layer2_; }
 	
 private:
 	void InitPhysics();
@@ -92,7 +100,14 @@ private:
 	std::vector<b2Body*>	collision_bodys_;
 	KaleContactListener*	contact_listener_;
 	
-	int		mask_layer_, ui_layer_;
+	int		mask_layer_, ui_layer_, ui_layer2_;
+	
+	LogoShower*		logo_shower_;
+	MenuButton*		menu_button_;
+	BlackMask*		black_mask_;
+	Menu*			menu_;
+	
+	bool	is_menu_mode_;
 };
 
 #endif // KALE_KALE_H
