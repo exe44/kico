@@ -91,6 +91,8 @@ private:
 	std::vector<b2Body*>	boundary_bodys_;
 	std::vector<b2Body*>	collision_bodys_;
 	KaleContactListener*	contact_listener_;
+	
+	int		mask_layer_, ui_layer_;
 };
 
 #endif // KALE_KALE_H

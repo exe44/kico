@@ -23,10 +23,15 @@ public:
 	void Update(float delta_time);
 	void OnCollisionStart(float approach_velocity);
 	
-	ERI::SceneActor* glow_obj() { return glow_obj_; }
-	void set_glow_obj(ERI::SceneActor* obj) { glow_obj_ = obj; }
+	inline ERI::SceneActor* glow_obj() { return glow_obj_; }
+	inline void set_glow_obj(ERI::SceneActor* obj) { glow_obj_ = obj; }
+	
+	inline float collision_factor() { return collision_factor_; }
+	inline void set_collision_factor(float factor) { collision_factor_ = factor; }
 
 private:
+	float	collision_factor_;
+	
 	ERI::SceneActor*	glow_obj_;
 	float				glow_remain_time_;
 };

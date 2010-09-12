@@ -29,25 +29,33 @@ void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldMani
 		const b2Body* bodyA = contact->GetFixtureA()->GetBody();
 		const b2Body* bodyB = contact->GetFixtureB()->GetBody();
 		
-		b2Vec2 point = worldManifold.points[0];
-		b2Vec2 vA = bodyA->GetLinearVelocityFromWorldPoint(point);
-		b2Vec2 vB = bodyB->GetLinearVelocityFromWorldPoint(point);
-		
-		Vector2 v(vB.x - vA.x, vB.y - vA.y);
-		Vector2 n(worldManifold.normal.x, worldManifold.normal.y);
-		float approach_velocity = v.DotProduct(n);
-		
-		if (approach_velocity > 0.33f)
+		if (bodyA->GetUserData() && bodyB->GetUserData())
 		{
-			Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+			b2Vec2 point = worldManifold.points[0];
+			b2Vec2 vA = bodyA->GetLinearVelocityFromWorldPoint(point);
+			b2Vec2 vB = bodyB->GetLinearVelocityFromWorldPoint(point);
 			
-			if (bodyA->GetUserData())
+			Vector2 v(vB.x - vA.x, vB.y - vA.y);
+			Vector2 n(worldManifold.normal.x, worldManifold.normal.y);
+			float approach_velocity = v.DotProduct(n);
+			
+			CollisionObj* objA = static_cast<CollisionObj*>(bodyA->GetUserData());
+			CollisionObj* objB = static_cast<CollisionObj*>(bodyB->GetUserData());
+			approach_velocity *= (objA->collision_factor() * objB->collision_factor());
+			
+			/*
+			if (approach_velocity > 0)
 			{
-				static_cast<CollisionObj*>(bodyA->GetUserData())->OnCollisionStart(approach_velocity);
+				printf("V %f A %f B %f\n", approach_velocity, objA->collision_factor(), objB->collision_factor());
 			}
-			if (bodyB->GetUserData())
+			 */
+			
+			if (approach_velocity > 0.33f)
 			{
-				static_cast<CollisionObj*>(bodyB->GetUserData())->OnCollisionStart(approach_velocity);
+				Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+				
+				objA->OnCollisionStart(approach_velocity);
+				objB->OnCollisionStart(approach_velocity);
 			}
 		}
 	}

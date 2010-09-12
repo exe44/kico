@@ -27,6 +27,16 @@ static const int kBoundaryHalfSize = 7;
 static const float kCameraZoomMin = 0.82f;
 static const float kCameraZoomMax = 2.5f;
 
+enum ObjType
+{
+	OBJ_TRIANGLE = 0,
+	OBJ_SQUARE,
+	OBJ_CONVEX_5,
+	OBJ_CONVEX_6,
+	OBJ_CIRCLE,
+	OBJ_END
+};
+
 #pragma mark Testing Usage
 
 static SpriteActor* mirror_texture_sprite;
@@ -41,7 +51,6 @@ static void UpdateFPS(float delta_time)
 	frame_count_timer += delta_time;
 	if (frame_count_timer >= 0.25f)
 	{
-		//fps_number->SetNumberFloat(frame_count / frame_count_timer);
 		static char number[8];
 		sprintf(number, "%d", static_cast<int>(frame_count / frame_count_timer));
 		fps_number->SetTxt(number);
@@ -56,7 +65,9 @@ static void UpdateFPS(float delta_time)
 kaleApp* kaleApp::ins_ptr_ = NULL;
 
 kaleApp::kaleApp() :
-	accelerator_g_(Vector3(0, -1, 0))
+	accelerator_g_(Vector3(0, -1, 0)),
+	mask_layer_(-1),
+	ui_layer_(-1)
 {
 }
 
@@ -73,16 +84,13 @@ void kaleApp::Init()
 	
 	//
 	
-	int mask_layer = ERI::Root::Ins().scene_mgr()->AddLayer();
-	int ui_layer = ERI::Root::Ins().scene_mgr()->AddLayer();
+	mask_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
+	ui_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
 	
 	//
 	
-	cam_ = new CameraActor(/*CameraActor::PERSPECTIVE*/);
+	cam_ = new CameraActor;
 	cam_->AddToScene();
-	//cam_->SetOrthoZoom(10);
-	//cam_->SetPos(Vector3(400, 400, 800));
-	//cam_->SetLookAt(Vector3(0, 0, 0));
 	Root::Ins().scene_mgr()->SetCurrentCam(cam_);
 	
 	light_ = new LightActor(LightActor::POINT);
@@ -108,20 +116,19 @@ void kaleApp::Init()
 	
 	//
 	
-	//mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 24, kBoundaryHalfSize * 2 + 24);
 	mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 8, kBoundaryHalfSize * 2 + 8);
-	mirror_dark_corner_mask_->AddToScene(ui_layer);
+	mirror_dark_corner_mask_->AddToScene(ui_layer_);
 	mirror_dark_corner_mask_->SetPos(Vector3(0, kBoundaryHalfSize * 0.7f, 2));
 	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
 	
 	screen_dark_corner_mask_ = new SpriteActor(320, 480);
-	screen_dark_corner_mask_->AddToScene(mask_layer);
+	screen_dark_corner_mask_->AddToScene(mask_layer_);
 	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
 	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
 	cam_->AddChild(screen_dark_corner_mask_);
 	
 	atmosphere_mask_ = new SpriteActor(kBoundaryHalfSize * 2, kBoundaryHalfSize * 2, 0, kBoundaryHalfSize);
-	atmosphere_mask_->AddToScene(mask_layer);
+	atmosphere_mask_->AddToScene(mask_layer_);
 	atmosphere_mask_->SetPos(Vector3(0, 0, 1));
 	atmosphere_mask_->SetDepthWrite(false);
 	atmosphere_mask_->BlendAdd();
@@ -142,7 +149,7 @@ void kaleApp::Init()
 	
 	fps_number = new TxtActor("0", "georgia_bold", 24, true);
 	fps_number->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	fps_number->AddToScene(ui_layer);
+	fps_number->AddToScene(ui_layer_);
 	fps_number->SetPos(120, -200);
 	fps_number->SetColor(Color(1, 1, 1));
 	fps_number->SetDepthTest(false);
@@ -251,8 +258,6 @@ void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
 		if (now_zoom < kCameraZoomMin) now_zoom = kCameraZoomMin;
 		if (now_zoom > kCameraZoomMax) now_zoom = kCameraZoomMax;
 		cam_->SetOrthoZoom(now_zoom);
-		
-		//printf("zoom = %f\n", now_zoom);
 	}
 	
 	distance = now_distance;
@@ -277,7 +282,7 @@ void kaleApp::Accelerate(float g_x, float g_y, float g_z)
 
 void kaleApp::InitPhysics()
 {
-	b2Vec2 gravity(0, -10);
+	b2Vec2 gravity(0, 0);
 	bool do_sleep = true;
 	world_ = new b2World(gravity, do_sleep);
 	contact_listener_ = new KaleContactListener;
@@ -332,15 +337,16 @@ void kaleApp::ResetCollisionObjs()
 	ClearCollisionObjs();
 	
 	float size_x, size_y, size;
-	int shape_type = RangeRandom(0, 3);
-	bool mix_shape = (shape_type == 3);
+	int shape_type = RangeRandom(0, OBJ_END);
+	bool mix_shape = (shape_type == OBJ_END);
 	
 	b2Body* body;
 	CollisionObj* obj;
+	CollisionObj* glow_obj;
 	
 	for (int i = 0; i < kCollisionObjNum; ++i)
 	{
-		if (mix_shape) shape_type = RangeRandom(0, 2);
+		if (mix_shape) shape_type = RangeRandom(0, OBJ_END - 1);
 		
 		b2BodyDef body_def;
 		body_def.type = b2_dynamicBody;
@@ -349,40 +355,133 @@ void kaleApp::ResetCollisionObjs()
 		
 		// Define the dynamic body fixture.
 		b2FixtureDef fixture_def;
+		// Set the box density to be non-zero, so it will be dynamic.
+		fixture_def.density = 1.0f;
+		// Override the default friction.
+		fixture_def.friction = 0.3f;
 		
 		b2PolygonShape poly_shape;
 		b2CircleShape circle_shape;
 		
-		if (shape_type == 0)
-		{
-			size_x = RangeRandom(0.5f, 1.0f);
-			size_y = RangeRandom(0.5f, 1.0f);
-			poly_shape.SetAsBox(size_x, size_y);
-			fixture_def.shape = &poly_shape;
-		}
-		else if (shape_type == 1)
-		{
-			size = RangeRandom(0.75f, 1.25f);
-			b2Vec2 vertices[3];
-			vertices[0].Set(-size, -size * 0.5f);
-			vertices[1].Set(size, -size * 0.5f);
-			vertices[2].Set(0.0f, size);
-			poly_shape.Set(vertices, 3);
-			fixture_def.shape = &poly_shape;
-		}
-		else
-		{
-			size = RangeRandom(0.5f, 1.0f);
-			circle_shape.m_radius = size;
-			fixture_def.shape = &circle_shape;
-		}
+		glow_obj = NULL;
 		
-		// Set the box density to be non-zero, so it will be dynamic.
-		fixture_def.density = 1.0f;
-		
-		// Override the default friction.
-		fixture_def.friction = 0.3f;
-		
+		switch (shape_type) {
+			case OBJ_TRIANGLE:
+				{
+					size = RangeRandom(0.75f, 1.25f);
+					b2Vec2 vertices[3];
+					vertices[0].Set(-size, -size * 0.5f);
+					vertices[1].Set(size, -size * 0.5f);
+					vertices[2].Set(0.0f, size);
+					poly_shape.Set(vertices, 3);
+					fixture_def.shape = &poly_shape;
+					
+					//
+					
+					obj = new Square(size - 0.175f);
+					obj->SetMaterial("media/triangle3.png", FILTER_LINEAR, FILTER_LINEAR);
+					
+					glow_obj = new Square((size - 0.175f) * 1.5f);
+					glow_obj->SetMaterial("media/triangle_glow2.png", FILTER_LINEAR, FILTER_LINEAR);
+				}
+				break;
+				
+			case OBJ_SQUARE:
+				{
+					size_x = RangeRandom(0.55f, 1.0f);
+					size_y = RangeRandom(0.55f, 1.0f);
+					poly_shape.SetAsBox(size_x, size_y);
+					fixture_def.shape = &poly_shape;
+					
+					//
+					
+					obj = new NonUniformSquare(size_x - 0.05f, size_y - 0.05f);
+					obj->SetMaterial("media/square2.png", FILTER_LINEAR, FILTER_LINEAR);
+					
+					glow_obj = new NonUniformSquare((size_x - 0.05f) * 1.5f, (size_y - 0.05f) * 1.5f);
+					glow_obj->SetMaterial("media/square_glow2.png", FILTER_LINEAR, FILTER_LINEAR);
+				}
+				break;
+				
+			case OBJ_CONVEX_5:
+				{
+					size = RangeRandom(0.5f, 1.25f);
+					b2Vec2 vertices[5];
+					vertices[0].Set(0, size);
+					vertices[1].Set(size * -0.95f, size * 0.31f);
+					vertices[2].Set(size * -0.59f, size * -0.81f);
+					vertices[3].Set(size * 0.59f, size * -0.81f);
+					vertices[4].Set(size * 0.95f, size * 0.31f);
+					poly_shape.Set(vertices, 5);
+					fixture_def.shape = &poly_shape;
+					
+					//
+					
+					obj = new Square(size - 0.125f);
+					obj->SetMaterial("media/convex5.png", FILTER_LINEAR, FILTER_LINEAR);
+					
+					glow_obj = new Square((size - 0.125f) * 1.5f);
+					glow_obj->SetMaterial("media/convex5_glow.png", FILTER_LINEAR, FILTER_LINEAR);
+				}
+				break;
+				
+			case OBJ_CONVEX_6:
+				{
+					b2Vec2 vertices[6];
+					
+					/*
+					 size = RangeRandom(0.5f, 1.25f);
+					 vertices[0].Set(0, size);
+					 vertices[1].Set(size * -0.866f, size * 0.5f);
+					 vertices[2].Set(size * -0.866f, size * -0.5f);
+					 vertices[3].Set(size * 0.0f, size * -1.0f);
+					 vertices[4].Set(size * 0.866f, size * -0.5f);
+					 vertices[5].Set(size * 0.866f, size * 0.5f);
+					 */
+					
+					size = RangeRandom(0.75f, 1.5f);
+					vertices[0].Set(0, size);
+					vertices[1].Set(size * -0.47f, size * 0.47f);
+					vertices[2].Set(size * -0.47f, size * -0.47f);
+					vertices[3].Set(size * 0.0f, size * -1.0f);
+					vertices[4].Set(size * 0.47f, size * -0.47f);
+					vertices[5].Set(size * 0.47f, size * 0.47f);
+					
+					poly_shape.Set(vertices, 6);
+					fixture_def.shape = &poly_shape;
+					
+					//
+					
+					obj = new Square(size - 0.175f);
+					obj->SetMaterial("media/convex62.png", FILTER_LINEAR, FILTER_LINEAR);
+					
+					glow_obj = new Square((size - 0.175f) * 1.5f);
+					glow_obj->SetMaterial("media/convex6_glow2.png", FILTER_LINEAR, FILTER_LINEAR);
+				}
+				break;
+				
+			case OBJ_CIRCLE:
+				{
+					size = RangeRandom(0.5f, 1.0f);
+					circle_shape.m_radius = size;
+					fixture_def.shape = &circle_shape;
+					
+					//
+					
+					obj = new Square(size - 0.05f);
+					obj->SetMaterial("media/circle.png", FILTER_LINEAR, FILTER_LINEAR);
+					obj->set_collision_factor(100.0f);
+					
+					glow_obj = new Square((size - 0.05f) * 1.5f);
+					glow_obj->SetMaterial("media/circle_glow2.png", FILTER_LINEAR, FILTER_LINEAR);
+				}
+				break;
+				
+			default:
+				ASSERT(0);
+				break;
+		}
+
 		// Add the shape to the body.
 		body->CreateFixture(&fixture_def);
 		
@@ -390,40 +489,16 @@ void kaleApp::ResetCollisionObjs()
 		
 		//
 		
-		CollisionObj* glow_obj;
-		
-		if (shape_type == 0)
+		if (glow_obj)
 		{
-			obj = new NonUniformSquare(size_x - 0.05f, size_y - 0.05f);
-			obj->SetMaterial("media/square2.png", FILTER_LINEAR, FILTER_LINEAR);
-			
-			glow_obj = new NonUniformSquare(size_x, size_y);
-			glow_obj->SetMaterial("media/square_glow.png", FILTER_LINEAR, FILTER_LINEAR);
+			glow_obj->BlendAdd();
+			glow_obj->SetDepthTest(false);
+			glow_obj->SetDepthWrite(false);
+			glow_obj->set_visible(false);
+			glow_obj->AddToScene(mask_layer_);
+			obj->AddChild(glow_obj);
+			obj->set_glow_obj(glow_obj);
 		}
-		else if (shape_type == 1)
-		{
-			obj = new Square(size - 0.15f);
-			obj->SetMaterial("media/triangle3.png", FILTER_LINEAR, FILTER_LINEAR);
-
-			glow_obj = new Square(size);
-			glow_obj->SetMaterial("media/triangle_glow.png", FILTER_LINEAR, FILTER_LINEAR);
-		}
-		else
-		{
-			obj = new Square(size - 0.05f);
-			obj->SetMaterial("media/circle.png", FILTER_LINEAR, FILTER_LINEAR);
-
-			glow_obj = new Square(size);
-			glow_obj->SetMaterial("media/circle_glow.png", FILTER_LINEAR, FILTER_LINEAR);
-		}
-		
-		glow_obj->BlendAdd();
-		glow_obj->SetDepthTest(false);
-		glow_obj->SetDepthWrite(false);
-		glow_obj->set_visible(false);
-		glow_obj->AddToScene(1);
-		obj->AddChild(glow_obj);
-		obj->set_glow_obj(glow_obj);
 		
 		obj->AddToScene();
 		obj->set_accept_light(true);
