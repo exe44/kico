@@ -65,11 +65,14 @@ kaleApp* kaleApp::ins_ptr_ = NULL;
 
 kaleApp::kaleApp() :
 	accelerator_g_(Vector3(0, -1, 0)),
+	logo_shower_(NULL),
+	is_menu_mode_(false),
+	is_auto_mode_(false),
+	is_sound_on_(true),
+	auto_choose_remain_time_(0.0f),
 	mask_layer_(-1),
 	ui_layer_(-1),
-	ui_layer2_(-1),
-	logo_shower_(NULL),
-	is_menu_mode_(false)
+	ui_layer2_(-1)
 {
 }
 
@@ -79,6 +82,8 @@ kaleApp::~kaleApp()
 
 void kaleApp::Init()
 {
+	// TODO: load option
+	
 	Hoimi::AudioManager::Instance().Initial();
 	Hoimi::AudioManager::Instance().LoadSound("ding");
 	
@@ -169,10 +174,13 @@ void kaleApp::Init()
 	//
 	
 	logo_shower_ = new LogoShower(this);
-	menu_button_ = new MenuButton(this);
 	black_mask_ = new BlackMask(this);
-	black_mask_->FadeOut(2.0f);
+	menu_button_ = new MenuButton(this);
 	menu_ = new Menu(this);
+	
+	//
+	
+	black_mask_->FadeOut(2.0f);
 }
 
 void kaleApp::OnTerminate()
@@ -182,8 +190,8 @@ void kaleApp::OnTerminate()
 void kaleApp::Release()
 {
 	delete menu_;
-	delete black_mask_;
 	delete menu_button_;
+	delete black_mask_;
 	
 	if (logo_shower_)
 	{
@@ -221,6 +229,11 @@ void kaleApp::Release()
 
 void kaleApp::Update(float delta_time)
 {
+	if (is_auto_mode_)
+	{
+		UpdateAuto(delta_time);
+	}
+	
 	UpdateFPS(delta_time);
 	UpdateWorldTransform(delta_time);
 	UpdateAtmosphere(delta_time);
@@ -239,8 +252,8 @@ void kaleApp::Update(float delta_time)
 	screen_dark_corner_mask_->set_visible(false);
 	fps_number->set_visible(false);
 	if (logo_shower_) logo_shower_->Hide();
-	menu_button_->Hide();
 	black_mask_->Hide();
+	menu_button_->Hide();
 	menu_->Hide();
 	
 	mirror_texture_->ProcessRender();
@@ -259,8 +272,8 @@ void kaleApp::Update(float delta_time)
 	screen_dark_corner_mask_->set_visible(true);
 	//fps_number->set_visible(true);
 	if (logo_shower_) logo_shower_->Show();
-	menu_button_->Show();
 	black_mask_->Show();
+	menu_button_->Show();
 	menu_->Show();
 	
 	//
@@ -275,35 +288,40 @@ void kaleApp::Update(float delta_time)
 		}
 	}
 	
-	menu_button_->Update(delta_time);
 	black_mask_->Update(delta_time);
+	menu_button_->Update(delta_time);
 	menu_->Update(delta_time);
 }
 
 void kaleApp::Click(int screen_x, int screen_y)
 {
 	Vector3 pos = Root::Ins().scene_mgr()->ScreenToWorldPos(screen_x, screen_y);
-	if (menu_button_->button()->IsHit(pos))
+	if (menu_button_->IsHit(pos))
 	{
 		if (is_menu_mode_)
 		{
-			menu_button_->FadeOut();
 			black_mask_->FadeOut(0.15f);
+			menu_button_->FadeOut();
 			menu_->FadeOut();
 		}
 		else
 		{
-			menu_button_->FadeIn();
 			black_mask_->FadeIn(0.15f, 0.5f);
+			menu_button_->FadeIn();
 			menu_->FadeIn();
 		}
 		
 		is_menu_mode_ = !is_menu_mode_;
 	}
-	else if (!is_menu_mode_)
+	else if (is_menu_mode_)
 	{
-		menu_button_->FadeInOut();
+		menu_->Click(pos);
+	}
+	else
+	{
 		//black_mask_->FadeInOut(0.5f, 0.5f);
+		menu_button_->FadeInOut();
+		
 		ResetCollisionObjs();
 	}
 }
@@ -332,6 +350,9 @@ void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
 
 void kaleApp::Accelerate(float g_x, float g_y, float g_z)
 {
+	if (is_auto_mode_)
+		return;
+	
 	world_->SetGravity(b2Vec2(g_x * 20, g_y * 20));
 	
 	accelerator_g_.x = g_x;
@@ -341,9 +362,32 @@ void kaleApp::Accelerate(float g_x, float g_y, float g_z)
 	for (int i = 0; i < collision_bodys_.size(); ++i)
 	{
 		if (!collision_bodys_[i]->IsAwake())
-		{
 			collision_bodys_[i]->SetAwake(true);
-		}
+	}		
+}
+
+void kaleApp::Shake()
+{
+	if (is_auto_mode_)
+		return;
+	
+	Vector3 inverse_g = accelerator_g_ * -1;
+	inverse_g.z = 0;
+	inverse_g.Normalize();
+	
+	Matrix4 rotate;
+	Vector3 force;
+	
+	for (int i = 0; i < collision_bodys_.size(); ++i)
+	{
+		if (!collision_bodys_[i]->IsAwake())
+			collision_bodys_[i]->SetAwake(true);
+		
+		Matrix4::RotateAxis(rotate, RangeRandom(-80, 80), Vector3(0, 0, 1));
+		force = rotate * inverse_g;
+		force *= RangeRandom(10.0f, 20.0f);
+		
+		collision_bodys_[i]->SetLinearVelocity(b2Vec2(force.x, force.y));
 	}
 }
 
@@ -352,7 +396,7 @@ void kaleApp::InitPhysics()
 	b2Vec2 gravity(0, 0);
 	bool do_sleep = true;
 	world_ = new b2World(gravity, do_sleep);
-	contact_listener_ = new KaleContactListener;
+	contact_listener_ = new KaleContactListener(this);
 	world_->SetContactListener(contact_listener_);
 }
 
@@ -630,6 +674,35 @@ void kaleApp::ClearCollisionObjs()
 	collision_objs_.clear();
 }
 
+void kaleApp::UpdateAuto(float delta_time)
+{
+	if (auto_choose_remain_time_ <= 0)
+	{
+		static Matrix4 rotate;
+		Matrix4::RotateAxis(rotate, RangeRandom(0.0f, 360.0f), Vector3(0, 0, 1));
+		accelerator_g_.z = 0.0f;
+		accelerator_g_.Normalize();
+		accelerator_g_.z = -0.33f;
+		accelerator_g_.Normalize();
+		accelerator_g_ = rotate * accelerator_g_;
+		
+		float power = RangeRandom(5.0f, 15.0f);
+		world_->SetGravity(b2Vec2(accelerator_g_.x * power, accelerator_g_.y * power));
+		
+		for (int i = 0; i < collision_bodys_.size(); ++i)
+		{
+			if (!collision_bodys_[i]->IsAwake())
+				collision_bodys_[i]->SetAwake(true);
+		}		
+		
+		auto_choose_remain_time_ = RangeRandom(1.0f, 4.0f);
+	}
+	else
+	{
+		auto_choose_remain_time_ -= delta_time;
+	}
+}
+
 void kaleApp::UpdateWorldTransform(float delta_time)
 {
 	world_->Step(1.0f / 60.0f, 6, 2); 
@@ -676,8 +749,5 @@ void kaleApp::UpdateAtmosphere(float delta_time)
 	
 	//
 	
-	Color menu_color(0.5f, 0.5f, 0.5f);
-	menu_color += color * 0.5f;
-	menu_color.a = menu_button_->button()->GetColor().a;
-	menu_button_->button()->SetColor(menu_color);
+	menu_button_->NotifyAtmosphereChange(color);
 }

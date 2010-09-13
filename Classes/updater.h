@@ -10,6 +10,8 @@
 #ifndef KALE_UPDATER_H
 #define KALE_UPDATER_H
 
+#include "math_helper.h"
+
 class Updater
 {
 public:
@@ -68,7 +70,9 @@ public:
 	void Hide();
 	void Show();
 	
-	inline ERI::SpriteActor* button() { return button_; }
+	bool IsHit(const ERI::Vector3& world_pos);
+	
+	void NotifyAtmosphereChange(const ERI::Color& atmosphere_color);
 	
 private:
 	kaleApp*			app_ref_;
@@ -119,8 +123,13 @@ public:
 	void Hide();
 	void Show();
 	
+	void Click(const ERI::Vector3& world_pos);
+	
 private:
 	kaleApp*			app_ref_;
+	
+	ERI::SpriteActor*	sound_;
+	ERI::SpriteActor*	auto_;
 	
 	ERI::TxtActor*		txt_;
 	ERI::TxtActor*		txt2_;

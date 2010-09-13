@@ -12,12 +12,20 @@
 #include "math_helper.h"
 #include "audio_manager.h"
 
+#include "kale.h"
 #include "collision_obj.h"
 
 using namespace ERI;
 
+KaleContactListener::KaleContactListener(kaleApp* app) : app_ref_(app)
+{
+}
+
 void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 {
+	if (!app_ref_->is_sound_on())
+		return;
+	
 	b2WorldManifold worldManifold;
 	contact->GetWorldManifold(&worldManifold);
 	

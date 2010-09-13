@@ -18,6 +18,8 @@
 
 using namespace ERI;
 
+#pragma mark LogoShower
+
 static const float kWaitLogoTime = 3.0f;
 static const float kLogoKeepTime = 2.0f;
 
@@ -102,11 +104,14 @@ void LogoShower::Show()
 	if (logo_->GetColor().a > 0.0f) logo_->set_visible(true);
 }
 
+#pragma mark MenuButton
+
 MenuButton::MenuButton(kaleApp* app) :
 	app_ref_(app),
 	keep_remain_time_(0.0f)
 {
 	button_ = new SpriteActor(32, 32);
+	button_->set_area_border(16);
 	button_->SetMaterial("media/menu3.png", FILTER_LINEAR, FILTER_LINEAR);
 	button_->BlendAdd();
 	button_->SetPos(Vector3(115, -200, 4));
@@ -196,7 +201,7 @@ void MenuButton::FadeInOut()
 	
 	fade_out_morpher_->SetCurrent(1.0f);
 	fade_out_morpher_->SetTarget(0.0f);
-	fade_out_morpher_->SetSpeed(0.33f);
+	fade_out_morpher_->SetSpeed(0.5f);
 }
 
 void MenuButton::Hide()
@@ -208,6 +213,21 @@ void MenuButton::Show()
 {
 	if (button_->GetColor().a > 0.0f) button_->set_visible(true);
 }
+
+bool MenuButton::IsHit(const ERI::Vector3& world_pos)
+{
+	return button_->IsHit(world_pos);
+}
+
+void MenuButton::NotifyAtmosphereChange(const ERI::Color& atmosphere_color)
+{
+	Color color(0.5f, 0.5f, 0.5f);
+	color += atmosphere_color * 0.5f;
+	color.a = button_->GetColor().a;
+	button_->SetColor(color);
+}
+
+#pragma mark BlackMask
 
 BlackMask::BlackMask(kaleApp* app) :
 	app_ref_(app)
@@ -313,22 +333,43 @@ void BlackMask::Show()
 	if (mask_->GetColor().a > 0.0f) mask_->set_visible(true);
 }
 
+#pragma mark Menu
+
 Menu::Menu(kaleApp* app) :
 	app_ref_(app)
 {
 	txt_ = new TxtActor("KICO by exe", "futura", 16, true);
 	txt_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
 	txt_->AddToScene(app_ref_->ui_layer2());
-	txt_->SetPos(Vector3(0, 10, 10));
+	txt_->SetPos(Vector3(0, -60, 10));
 	txt_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(txt_);
 	
-	txt2_ = new TxtActor("(C) 2009 all rights reserved.", "futura", 14, true);
+	txt2_ = new TxtActor("(C) 2010 all rights reserved.", "futura", 14, true);
 	txt2_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
 	txt2_->AddToScene(app_ref_->ui_layer2());
-	txt2_->SetPos(Vector3(0, -10, 10));
+	txt2_->SetPos(Vector3(0, -80, 10));
 	txt2_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(txt2_);
+	
+	sound_ = new SpriteActor(32, 32);
+	sound_->set_area_border(16);
+	sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
+	sound_->BlendAdd();
+	sound_->AddToScene(app_ref_->ui_layer2());
+	sound_->SetPos(Vector3(0, 120, 10));
+	sound_->SetColor(Color(1, 1, 1, 0));
+	Root::Ins().scene_mgr()->current_cam()->AddChild(sound_);
+
+	auto_ = new SpriteActor(32, 32);
+	auto_->set_area_border(16);
+	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
+	auto_->BlendAdd();
+	auto_->AddToScene(app_ref_->ui_layer2());
+	auto_->SetPos(Vector3(0, 40, 10));
+	auto_->SetColor(Color(1, 1, 1, 0));
+	Root::Ins().scene_mgr()->current_cam()->AddChild(auto_);
+	
 
 	fade_in_morpher_ = new Morpher<float>(4.0f, 0.0f);
 	fade_out_morpher_ = new Morpher<float>(4.0f, 0.0f);
@@ -338,6 +379,8 @@ Menu::~Menu()
 {
 	delete fade_out_morpher_;
 	delete fade_in_morpher_;
+	delete auto_;
+	delete sound_;
 	delete txt2_;
 	delete txt_;
 }
@@ -356,6 +399,14 @@ void Menu::Update(float delta_time)
 		color.a = fade_in_morpher_->current_value();
 		txt2_->SetColor(color);
 		
+		color = sound_->GetColor();
+		color.a = fade_in_morpher_->current_value();
+		sound_->SetColor(color);
+		
+		color = auto_->GetColor();
+		color.a = fade_in_morpher_->current_value();
+		auto_->SetColor(color);
+		
 		return;
 	}
 	
@@ -370,6 +421,14 @@ void Menu::Update(float delta_time)
 		color = txt2_->GetColor();
 		color.a = fade_out_morpher_->current_value();
 		txt2_->SetColor(color);
+		
+		color = sound_->GetColor();
+		color.a = fade_out_morpher_->current_value();
+		sound_->SetColor(color);
+		
+		color = auto_->GetColor();
+		color.a = fade_out_morpher_->current_value();
+		auto_->SetColor(color);
 		
 		return;
 	}
@@ -399,6 +458,8 @@ void Menu::Hide()
 {
 	txt_->set_visible(false);
 	txt2_->set_visible(false);
+	sound_->set_visible(false);
+	auto_->set_visible(false);
 }
 
 void Menu::Show()
@@ -407,6 +468,21 @@ void Menu::Show()
 	{
 		txt_->set_visible(true);
 		txt2_->set_visible(true);
+		sound_->set_visible(true);
+		auto_->set_visible(true);
 	}
 }
 
+void Menu::Click(const ERI::Vector3& world_pos)
+{
+	if (sound_->IsHit(world_pos))
+	{
+		app_ref_->set_is_sound_on(!app_ref_->is_sound_on());
+		sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
+	}
+	else if (auto_->IsHit(world_pos))
+	{
+		app_ref_->set_is_auto_mode(!app_ref_->is_auto_mode());
+		auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
+	}
+}
