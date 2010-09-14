@@ -11,8 +11,11 @@
 
 #include <cmath>
 
+#include "kale.h"
+
 using namespace ERI;
 
+#pragma mark TriangleMirror
 
 TriangleMirror::TriangleMirror(float half_edge, int row, int col) :
 	half_edge_(half_edge), row_(row), col_(col)
@@ -114,7 +117,55 @@ void TriangleMirror::UpdateVertexBuffer()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_2_pos_tex) * v_count, v, GL_STATIC_DRAW);
 	
 	delete [] v;
+}
+
+#pragma mark Mirror
+
+Mirror::Mirror(kaleApp* app) : app_ref_(app)
+{
+	mirror_cam_ = new CameraActor();
+	mirror_cam_->SetPos(0, app_ref_->kBoundaryHalfSize);
+	mirror_cam_->SetOrthoZoom(16);
 	
-	//	render_data_.index_count = v_count;
-	//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data_.index_buffer);
+	mirror_texture_ = new RenderToTexture(256, 256, mirror_cam_);
+	mirror_texture_->Init();
+	
+	mirror_dark_corner_mask_ = new SpriteActor(app_ref_->kBoundaryHalfSize * 2 + 8, app_ref_->kBoundaryHalfSize * 2 + 8);
+	mirror_dark_corner_mask_->AddToScene(app_ref_->ui_layer());
+	mirror_dark_corner_mask_->SetPos(Vector3(0, app_ref_->kBoundaryHalfSize * 0.7f, 2));
+	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
+	
+	mirror_ = new TriangleMirror(50, 7, 9);
+	mirror_->AddToScene();
+	mirror_->SetMaterial(mirror_texture_->texture(), FILTER_LINEAR, FILTER_LINEAR);
+	
+	mirror_debug_ = new SpriteActor(256, 256);
+	mirror_debug_->AddToScene();
+	mirror_debug_->SetMaterial(mirror_texture_->texture());
+	mirror_debug_->SetTexAreaUV(0.0f, 1.0f, 1.0f, -1.0f);
+}
+
+Mirror::~Mirror()
+{
+	delete mirror_debug_;
+	delete mirror_;
+	delete mirror_dark_corner_mask_;
+	delete mirror_texture_;
+	delete mirror_cam_;
+}
+
+void Mirror::Make()
+{
+	mirror_dark_corner_mask_->set_visible(true);
+	mirror_->set_visible(false);
+	mirror_debug_->set_visible(false);
+	
+	mirror_texture_->ProcessRender();
+}
+
+void Mirror::Show()
+{
+	mirror_dark_corner_mask_->set_visible(false);
+	mirror_->set_visible(true);
+	//mirror_debug_->set_visible(true);
 }

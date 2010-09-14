@@ -12,6 +12,7 @@
 
 #include "scene_actor.h"
 
+#pragma mark TriangleMirror
 
 class TriangleMirror : public ERI::SceneActor
 {
@@ -24,6 +25,31 @@ private:
 	
 	float	half_edge_;
 	int		row_, col_;
+};
+
+#pragma mark Mirror
+
+class kaleApp;
+
+class Mirror
+{
+public:
+	Mirror(kaleApp* app);
+	~Mirror();
+	
+	void Make();
+	void Show();
+	
+private:
+	kaleApp*				app_ref_;
+	
+	ERI::CameraActor*		mirror_cam_;
+	ERI::RenderToTexture*	mirror_texture_;
+	ERI::SpriteActor*		mirror_dark_corner_mask_;
+	
+	TriangleMirror*			mirror_;
+	
+	ERI::SpriteActor*		mirror_debug_;
 };
 
 

@@ -24,16 +24,18 @@ namespace ERI
 	struct Texture;
 }
 
-class CollisionObj;
-class TriangleMirror;
-template<class> class Morpher;
 class b2World;
 class b2Body;
+
+class Mirror;
+class CollisionObj;
+class TriangleMirror;
 class KaleContactListener;
 class LogoShower;
 class BlackMask;
 class MenuButton;
 class Menu;
+template<class> class Morpher;
 
 class kaleApp : public ERI::InputHandler
 {
@@ -72,6 +74,8 @@ public:
 	inline int ui_layer() { return ui_layer_; }
 	inline int ui_layer2() { return ui_layer2_; }
 	
+	static const int kBoundaryHalfSize;
+	
 private:
 	void InitPhysics();
 	void InitBoundary();
@@ -87,28 +91,25 @@ private:
 	
 	ERI::CameraActor*		cam_;
 	ERI::LightActor*		light_;
+
+	Mirror*					mirror_;
 	
-	ERI::CameraActor*		mirror_cam_;
-	ERI::RenderToTexture*	mirror_texture_;
-	TriangleMirror*			mirror_;
-	
-	ERI::SpriteActor*		mirror_dark_corner_mask_;
-	ERI::SpriteActor*		screen_dark_corner_mask_;
 	ERI::SpriteActor*		atmosphere_mask_;
+	const ERI::Texture*		atmosphere_texture_;
+	float					atmosphere_u_;
+	Morpher<float>*			atmosphere_v_blender_;
 	
 	ERI::Vector3			accelerator_g_;
 	
 	std::vector<CollisionObj*>	collision_objs_;
 	
-	const ERI::Texture*		atmosphere_texture_;
-	float					atmosphere_u_;
-	Morpher<float>*			atmosphere_v_blender_;
-	
 	b2World*				world_;
 	std::vector<b2Body*>	boundary_bodys_;
 	std::vector<b2Body*>	collision_bodys_;
 	KaleContactListener*	contact_listener_;
-	
+
+	ERI::SpriteActor*		screen_dark_corner_mask_;
+
 	LogoShower*				logo_shower_;
 	BlackMask*				black_mask_;
 	MenuButton*				menu_button_;

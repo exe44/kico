@@ -24,7 +24,6 @@
 using namespace ERI;
 
 static const int kCollisionObjNum = 40;
-static const int kBoundaryHalfSize = 7;
 static const float kCameraZoomMin = 0.82f;
 static const float kCameraZoomMax = 2.5f;
 
@@ -40,7 +39,6 @@ enum ObjType
 
 #pragma mark Testing Usage
 
-static SpriteActor* mirror_texture_sprite;
 static NumberActor* fps_number;
 
 static void UpdateFPS(float delta_time)
@@ -61,6 +59,7 @@ static void UpdateFPS(float delta_time)
 
 #pragma mark kaleApp
 
+const int kaleApp::kBoundaryHalfSize = 7;
 kaleApp* kaleApp::ins_ptr_ = NULL;
 
 kaleApp::kaleApp() :
@@ -111,29 +110,9 @@ void kaleApp::Init()
 	
 	//
 	
-	mirror_cam_ = new CameraActor();
-	mirror_cam_->SetPos(0, kBoundaryHalfSize);
-	mirror_cam_->SetOrthoZoom(16);
-	
-	mirror_texture_ = new RenderToTexture(256, 256, mirror_cam_);
-	mirror_texture_->Init();
-	
-	mirror_ = new TriangleMirror(50, 7, 9);
-	mirror_->AddToScene();
-	mirror_->SetMaterial(mirror_texture_->texture(), FILTER_LINEAR, FILTER_LINEAR);
+	mirror_ = new Mirror(this);
 	
 	//
-	
-	mirror_dark_corner_mask_ = new SpriteActor(kBoundaryHalfSize * 2 + 8, kBoundaryHalfSize * 2 + 8);
-	mirror_dark_corner_mask_->AddToScene(ui_layer_);
-	mirror_dark_corner_mask_->SetPos(Vector3(0, kBoundaryHalfSize * 0.7f, 2));
-	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
-	
-	screen_dark_corner_mask_ = new SpriteActor(320, 480);
-	screen_dark_corner_mask_->AddToScene(mask_layer_);
-	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
-	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
-	cam_->AddChild(screen_dark_corner_mask_);
 	
 	atmosphere_mask_ = new SpriteActor(kBoundaryHalfSize * 2, kBoundaryHalfSize * 2, 0, kBoundaryHalfSize);
 	atmosphere_mask_->AddToScene(mask_layer_);
@@ -141,17 +120,8 @@ void kaleApp::Init()
 	atmosphere_mask_->SetDepthWrite(false);
 	atmosphere_mask_->BlendAdd();
 	
-	//
-	
 	atmosphere_texture_ = Root::Ins().texture_mgr()->GetTexture("media/atmosphere3.png", true);
 	atmosphere_v_blender_ = new Morpher<float>(0.2f, 0.05f);
-	
-	//
-	
-	mirror_texture_sprite = new SpriteActor(256, 256);
-	mirror_texture_sprite->AddToScene();
-	mirror_texture_sprite->SetMaterial(mirror_texture_->texture());
-	mirror_texture_sprite->SetTexAreaUV(0.0f, 1.0f, 1.0f, -1.0f);
 	
 	//
 	
@@ -170,6 +140,14 @@ void kaleApp::Init()
 	//
 	
 	ResetCollisionObjs();
+	
+	//
+	
+	screen_dark_corner_mask_ = new SpriteActor(320, 480);
+	screen_dark_corner_mask_->AddToScene(mask_layer_);
+	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
+	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
+	cam_->AddChild(screen_dark_corner_mask_);
 	
 	//
 	
@@ -199,6 +177,8 @@ void kaleApp::Release()
 		logo_shower_ = NULL;
 	}
 	
+	delete screen_dark_corner_mask_;
+	
 	ClearCollisionObjs();
 	
 	for (int i = 0; i < boundary_bodys_.size(); ++i)
@@ -210,18 +190,12 @@ void kaleApp::Release()
 	delete world_;
 	
 	delete fps_number;
-	delete mirror_texture_sprite;
 	
 	delete atmosphere_v_blender_;
 	Root::Ins().texture_mgr()->ReleaseTexture(atmosphere_texture_);
-	
 	delete atmosphere_mask_;
-	delete screen_dark_corner_mask_;
-	delete mirror_dark_corner_mask_;
 	
 	delete mirror_;
-	delete mirror_texture_;
-	delete mirror_cam_;
 	
 	delete light_;
 	delete cam_;
@@ -238,7 +212,7 @@ void kaleApp::Update(float delta_time)
 	UpdateWorldTransform(delta_time);
 	UpdateAtmosphere(delta_time);
 
-	// create mirror
+	// make mirror
 	
 	for (int i = 0; i < collision_objs_.size(); ++i)
 	{
@@ -246,9 +220,7 @@ void kaleApp::Update(float delta_time)
 		collision_objs_[i]->Update(delta_time);
 	}
 	atmosphere_mask_->set_visible(true);
-	mirror_dark_corner_mask_->set_visible(true);
-	mirror_->set_visible(false);
-	mirror_texture_sprite->set_visible(false);
+		
 	screen_dark_corner_mask_->set_visible(false);
 	fps_number->set_visible(false);
 	if (logo_shower_) logo_shower_->Hide();
@@ -256,25 +228,26 @@ void kaleApp::Update(float delta_time)
 	menu_button_->Hide();
 	menu_->Hide();
 	
-	mirror_texture_->ProcessRender();
+	mirror_->Make();
 	
 	// show mirror
 	
 	for (int i = 0; i < collision_objs_.size(); ++i)
 	{
 		collision_objs_[i]->set_visible(false);
-		if (collision_objs_[i]->glow_obj()) collision_objs_[i]->glow_obj()->set_visible(false);
+		if (collision_objs_[i]->glow_obj())
+			collision_objs_[i]->glow_obj()->set_visible(false);
 	}
 	atmosphere_mask_->set_visible(false);
-	mirror_dark_corner_mask_->set_visible(false);
-	mirror_->set_visible(true);
-	//mirror_texture_sprite->set_visible(true);
+	
 	screen_dark_corner_mask_->set_visible(true);
 	//fps_number->set_visible(true);
 	if (logo_shower_) logo_shower_->Show();
 	black_mask_->Show();
 	menu_button_->Show();
 	menu_->Show();
+	
+	mirror_->Show();
 	
 	//
 	
@@ -540,16 +513,6 @@ void kaleApp::ResetCollisionObjs()
 				{
 					b2Vec2 vertices[6];
 					
-					/*
-					 size = RangeRandom(0.5f, 1.25f);
-					 vertices[0].Set(0, size);
-					 vertices[1].Set(size * -0.866f, size * 0.5f);
-					 vertices[2].Set(size * -0.866f, size * -0.5f);
-					 vertices[3].Set(size * 0.0f, size * -1.0f);
-					 vertices[4].Set(size * 0.866f, size * -0.5f);
-					 vertices[5].Set(size * 0.866f, size * 0.5f);
-					 */
-					
 					size = RangeRandom(0.75f, 1.5f);
 					vertices[0].Set(0, size);
 					vertices[1].Set(size * -0.47f, size * 0.47f);
@@ -695,7 +658,7 @@ void kaleApp::UpdateAuto(float delta_time)
 				collision_bodys_[i]->SetAwake(true);
 		}		
 		
-		auto_choose_remain_time_ = RangeRandom(1.0f, 4.0f);
+		auto_choose_remain_time_ = RangeRandom(1.0f, 3.0f);
 	}
 	else
 	{
