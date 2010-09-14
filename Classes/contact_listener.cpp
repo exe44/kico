@@ -23,9 +23,6 @@ KaleContactListener::KaleContactListener(kaleApp* app) : app_ref_(app)
 
 void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 {
-	if (!app_ref_->is_sound_on())
-		return;
-	
 	b2WorldManifold worldManifold;
 	contact->GetWorldManifold(&worldManifold);
 	
@@ -51,16 +48,12 @@ void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldMani
 			CollisionObj* objB = static_cast<CollisionObj*>(bodyB->GetUserData());
 			approach_velocity *= (objA->collision_factor() * objB->collision_factor());
 			
-			/*
-			if (approach_velocity > 0)
-			{
-				printf("V %f A %f B %f\n", approach_velocity, objA->collision_factor(), objB->collision_factor());
-			}
-			 */
-			
 			if (approach_velocity > 0.33f)
 			{
-				Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+				if (app_ref_->is_sound_on())
+				{
+					Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+				}
 				
 				objA->OnCollisionStart(approach_velocity);
 				objB->OnCollisionStart(approach_velocity);
