@@ -13,6 +13,7 @@
 #include "renderer.h"
 #include "scene_mgr.h"
 #include "scene_actor.h"
+#include "platform_helper.h"
 #include "audio_manager.h"
 
 #include "mirror_obj.h"
@@ -26,6 +27,7 @@ using namespace ERI;
 static const int kCollisionObjNum = 40;
 static const float kCameraZoomMin = 0.82f;
 static const float kCameraZoomMax = 2.5f;
+static const float kAutoResetTime = 30.0f;
 
 enum ObjType
 {
@@ -68,7 +70,9 @@ kaleApp::kaleApp() :
 	is_menu_mode_(false),
 	is_auto_mode_(false),
 	is_sound_on_(true),
-	auto_choose_remain_time_(0.0f),
+	wait_button_remain_time_(0.0f),
+	auto_choose_g_remain_time_(0.0f),
+	auto_reset_remain_time_(0.0f),
 	mask_layer_(-1),
 	ui_layer_(-1),
 	ui_layer2_(-1)
@@ -81,10 +85,11 @@ kaleApp::~kaleApp()
 
 void kaleApp::Init()
 {
-	// TODO: load option
+	LoadOption();
 	
 	Hoimi::AudioManager::Instance().Initial();
 	Hoimi::AudioManager::Instance().LoadSound("ding");
+	//Hoimi::AudioManager::Instance().LoadSound("click");
 	
 	Root::Ins().input_mgr()->set_handler(this);
 	
@@ -139,7 +144,7 @@ void kaleApp::Init()
 	
 	//
 	
-	ResetCollisionObjs();
+	ResetCollisionObjs(true);
 	
 	//
 	
@@ -163,6 +168,7 @@ void kaleApp::Init()
 
 void kaleApp::OnTerminate()
 {
+	SaveOption();
 }
 
 void kaleApp::Release()
@@ -258,6 +264,17 @@ void kaleApp::Update(float delta_time)
 		{
 			delete logo_shower_;
 			logo_shower_ = NULL;
+			
+			wait_button_remain_time_ = 2.0f;
+		}
+	}
+	
+	if (wait_button_remain_time_ > 0.0f)
+	{
+		wait_button_remain_time_ -= delta_time;
+		if (wait_button_remain_time_ <= 0.0f)
+		{
+			if (!is_menu_mode_) menu_button_->FadeInOut();
 		}
 	}
 	
@@ -273,13 +290,13 @@ void kaleApp::Click(int screen_x, int screen_y)
 	{
 		if (is_menu_mode_)
 		{
-			black_mask_->FadeOut(0.15f);
+			black_mask_->FadeOut(0.2f);
 			menu_button_->FadeOut();
 			menu_->FadeOut();
 		}
 		else
 		{
-			black_mask_->FadeIn(0.15f, 0.5f);
+			black_mask_->FadeIn(0.2f, 0.5f);
 			menu_button_->FadeIn();
 			menu_->FadeIn();
 		}
@@ -292,10 +309,12 @@ void kaleApp::Click(int screen_x, int screen_y)
 	}
 	else
 	{
-		//black_mask_->FadeInOut(0.5f, 0.5f);
-		menu_button_->FadeInOut();
+		black_mask_->FadeInOut(0.2f, 0.4f);
 		
-		ResetCollisionObjs();
+		if (is_auto_mode_)
+		{
+			auto_reset_remain_time_ = kAutoResetTime;
+		}
 	}
 }
 
@@ -364,6 +383,22 @@ void kaleApp::Shake()
 	}
 }
 
+void kaleApp::SetIsAutoMode(bool is_auto_mode)
+{
+	is_auto_mode_ = is_auto_mode;
+	if (is_auto_mode)
+	{
+		auto_choose_g_remain_time_ = 0.0f;
+		auto_reset_remain_time_ = kAutoResetTime;
+	}
+}
+
+void kaleApp::NotifyBlackMaskBetweenFadeInOut()
+{
+	ResetCollisionObjs();
+	menu_button_->FadeInOut();
+}
+
 void kaleApp::InitPhysics()
 {
 	b2Vec2 gravity(0, 0);
@@ -416,7 +451,7 @@ void kaleApp::InitBoundary()
 	}
 }
 
-void kaleApp::ResetCollisionObjs()
+void kaleApp::ResetCollisionObjs(bool is_first_time /*= false*/)
 {
 	ClearCollisionObjs();
 	
@@ -589,7 +624,7 @@ void kaleApp::ResetCollisionObjs()
 	atmosphere_u_ = RangeRandom(0.0f, 1.0f);
 	atmosphere_v_blender_->SetCurrent(0.5f);
 	
-	bool use_atmosphere_color = RangeRandom(0, 1);
+	bool use_atmosphere_color = is_first_time ? true : RangeRandom(0, 1);
 	
 	for (int i = 0; i < kCollisionObjNum; ++i)
 	{
@@ -639,13 +674,13 @@ void kaleApp::ClearCollisionObjs()
 
 void kaleApp::UpdateAuto(float delta_time)
 {
-	if (auto_choose_remain_time_ <= 0)
+	if (auto_choose_g_remain_time_ <= 0)
 	{
 		static Matrix4 rotate;
 		Matrix4::RotateAxis(rotate, RangeRandom(0.0f, 360.0f), Vector3(0, 0, 1));
 		accelerator_g_.z = 0.0f;
 		accelerator_g_.Normalize();
-		accelerator_g_.z = -0.33f;
+		accelerator_g_.z = -0.5f;
 		accelerator_g_.Normalize();
 		accelerator_g_ = rotate * accelerator_g_;
 		
@@ -658,11 +693,21 @@ void kaleApp::UpdateAuto(float delta_time)
 				collision_bodys_[i]->SetAwake(true);
 		}		
 		
-		auto_choose_remain_time_ = RangeRandom(1.0f, 3.0f);
+		auto_choose_g_remain_time_ = RangeRandom(1.0f, 3.0f);
 	}
 	else
 	{
-		auto_choose_remain_time_ -= delta_time;
+		auto_choose_g_remain_time_ -= delta_time;
+	}
+	
+	if (!is_menu_mode_ && auto_reset_remain_time_ > 0.0f)
+	{
+		auto_reset_remain_time_ -= delta_time;
+		if (auto_reset_remain_time_ <= 0.0f)
+		{
+			black_mask_->FadeInOut(2.0f, 2.0f);
+			auto_reset_remain_time_ = kAutoResetTime;
+		}
 	}
 }
 
@@ -713,4 +758,34 @@ void kaleApp::UpdateAtmosphere(float delta_time)
 	//
 	
 	menu_button_->NotifyAtmosphereChange(color);
+}
+
+void kaleApp::LoadOption()
+{
+	std::string path = ERI::GetHomePath();
+	path += "/Documents/option.sav";
+	
+	FILE* f = fopen(path.c_str(), "rb");
+	if (f)
+	{
+		fread(&is_auto_mode_, sizeof(bool), 1, f);
+		fread(&is_sound_on_, sizeof(bool), 1, f);
+		fclose(f);
+	}
+	
+	SetIsAutoMode(is_auto_mode_);
+}
+
+void kaleApp::SaveOption()
+{
+	std::string path = ERI::GetHomePath();
+	path += "/Documents/option.sav";
+	
+	FILE* f = fopen(path.c_str(), "wb");
+	if (f)
+	{
+		fwrite(&is_auto_mode_, sizeof(bool), 1, f);
+		fwrite(&is_sound_on_, sizeof(bool), 1, f);
+		fclose(f);
+	}
 }

@@ -12,6 +12,7 @@
 #include "root.h"
 #include "scene_mgr.h"
 #include "scene_actor.h"
+#include "audio_manager.h"
 
 #include "kale.h"
 #include "helper.h"
@@ -31,7 +32,7 @@ LogoShower::LogoShower(kaleApp* app) :
 {
 	logo_ = new TxtActor("k i c o", "futura", 26);
 	logo_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	logo_->AddToScene(app_ref_->ui_layer());
+	logo_->AddToScene(app_ref_->ui_layer2());
 	logo_->SetPos(Vector3(-120, 40, 5));
 	logo_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(logo_);
@@ -201,7 +202,7 @@ void MenuButton::FadeInOut()
 	
 	fade_out_morpher_->SetCurrent(1.0f);
 	fade_out_morpher_->SetTarget(0.0f);
-	fade_out_morpher_->SetSpeed(0.5f);
+	fade_out_morpher_->SetSpeed(0.33f);
 }
 
 void MenuButton::Hide()
@@ -257,6 +258,11 @@ void BlackMask::Update(float delta_time)
 		Color color = mask_->GetColor();
 		color.a = fade_in_morpher_->current_value();
 		mask_->SetColor(color);
+		
+		if (fade_in_morpher_->IsFinished() && !fade_out_morpher_->IsFinished())
+		{
+			app_ref_->NotifyBlackMaskBetweenFadeInOut();
+		}
 		
 		return;
 	}
@@ -345,19 +351,26 @@ Menu::Menu(kaleApp* app) :
 	txt_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(txt_);
 	
-	txt2_ = new TxtActor("(C) 2010 all rights reserved.", "futura", 14, true);
+	txt2_ = new TxtActor("(C) 2010 Wallmud & Exe", "futura", 14, true);
 	txt2_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
 	txt2_->AddToScene(app_ref_->ui_layer2());
-	txt2_->SetPos(Vector3(0, -80, 10));
+	txt2_->SetPos(Vector3(0, -85, 10));
 	txt2_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(txt2_);
+	
+	txt3_ = new TxtActor("All rights reserved.", "futura", 14, true);
+	txt3_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
+	txt3_->AddToScene(app_ref_->ui_layer2());
+	txt3_->SetPos(Vector3(0, -100, 10));
+	txt3_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
+	Root::Ins().scene_mgr()->current_cam()->AddChild(txt3_);
 	
 	sound_ = new SpriteActor(32, 32);
 	sound_->set_area_border(16);
 	sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
 	sound_->BlendAdd();
 	sound_->AddToScene(app_ref_->ui_layer2());
-	sound_->SetPos(Vector3(0, 120, 10));
+	sound_->SetPos(Vector3(0, 130, 10));
 	sound_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(sound_);
 
@@ -366,7 +379,7 @@ Menu::Menu(kaleApp* app) :
 	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
 	auto_->BlendAdd();
 	auto_->AddToScene(app_ref_->ui_layer2());
-	auto_->SetPos(Vector3(0, 40, 10));
+	auto_->SetPos(Vector3(0, 50, 10));
 	auto_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(auto_);
 	
@@ -381,6 +394,7 @@ Menu::~Menu()
 	delete fade_in_morpher_;
 	delete auto_;
 	delete sound_;
+	delete txt3_;
 	delete txt2_;
 	delete txt_;
 }
@@ -398,6 +412,10 @@ void Menu::Update(float delta_time)
 		color = txt2_->GetColor();
 		color.a = fade_in_morpher_->current_value();
 		txt2_->SetColor(color);
+
+		color = txt3_->GetColor();
+		color.a = fade_in_morpher_->current_value();
+		txt3_->SetColor(color);
 		
 		color = sound_->GetColor();
 		color.a = fade_in_morpher_->current_value();
@@ -421,6 +439,10 @@ void Menu::Update(float delta_time)
 		color = txt2_->GetColor();
 		color.a = fade_out_morpher_->current_value();
 		txt2_->SetColor(color);
+		
+		color = txt3_->GetColor();
+		color.a = fade_out_morpher_->current_value();
+		txt3_->SetColor(color);
 		
 		color = sound_->GetColor();
 		color.a = fade_out_morpher_->current_value();
@@ -458,6 +480,7 @@ void Menu::Hide()
 {
 	txt_->set_visible(false);
 	txt2_->set_visible(false);
+	txt3_->set_visible(false);
 	sound_->set_visible(false);
 	auto_->set_visible(false);
 }
@@ -468,6 +491,7 @@ void Menu::Show()
 	{
 		txt_->set_visible(true);
 		txt2_->set_visible(true);
+		txt3_->set_visible(true);
 		sound_->set_visible(true);
 		auto_->set_visible(true);
 	}
@@ -479,10 +503,14 @@ void Menu::Click(const ERI::Vector3& world_pos)
 	{
 		app_ref_->set_is_sound_on(!app_ref_->is_sound_on());
 		sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
+		
+		//Hoimi::AudioManager::Instance().PlaySound("click");
 	}
 	else if (auto_->IsHit(world_pos))
 	{
-		app_ref_->set_is_auto_mode(!app_ref_->is_auto_mode());
+		app_ref_->SetIsAutoMode(!app_ref_->is_auto_mode());
 		auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
+		
+		//Hoimi::AudioManager::Instance().PlaySound("click");
 	}
 }

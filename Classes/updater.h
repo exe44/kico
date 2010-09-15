@@ -133,6 +133,7 @@ private:
 	
 	ERI::TxtActor*		txt_;
 	ERI::TxtActor*		txt2_;
+	ERI::TxtActor*		txt3_;
 	
 	Morpher<float>*		fade_in_morpher_;
 	Morpher<float>*		fade_out_morpher_;

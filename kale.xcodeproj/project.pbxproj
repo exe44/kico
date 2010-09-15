@@ -76,6 +76,12 @@
 		42B2CFBB1219632100075E3B /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42B2CFBA1219632100075E3B /* OpenAL.framework */; };
 		42B2CFBF1219633600075E3B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42B2CFBE1219633600075E3B /* OpenGLES.framework */; };
 		42B2CFDE1219645F00075E3B /* kale.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42B2CFDD1219645F00075E3B /* kale.cpp */; };
+		42BCC9491241202C001795B1 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9431241202C001795B1 /* Icon-72.png */; };
+		42BCC94A1241202C001795B1 /* Icon-114.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9441241202C001795B1 /* Icon-114.png */; };
+		42BCC94B1241202C001795B1 /* Icon-Small-50.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9451241202C001795B1 /* Icon-Small-50.png */; };
+		42BCC94C1241202C001795B1 /* Icon-Small-58.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9461241202C001795B1 /* Icon-Small-58.png */; };
+		42BCC94D1241202C001795B1 /* Icon-Small.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9471241202C001795B1 /* Icon-Small.png */; };
+		42BCC94E1241202C001795B1 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 42BCC9481241202C001795B1 /* Icon.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -217,6 +223,12 @@
 		42B2CFBE1219633600075E3B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		42B2CFDC1219645F00075E3B /* kale.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kale.h; sourceTree = "<group>"; };
 		42B2CFDD1219645F00075E3B /* kale.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kale.cpp; sourceTree = "<group>"; };
+		42BCC9431241202C001795B1 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
+		42BCC9441241202C001795B1 /* Icon-114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-114.png"; sourceTree = "<group>"; };
+		42BCC9451241202C001795B1 /* Icon-Small-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50.png"; sourceTree = "<group>"; };
+		42BCC9461241202C001795B1 /* Icon-Small-58.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-58.png"; sourceTree = "<group>"; };
+		42BCC9471241202C001795B1 /* Icon-Small.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small.png"; sourceTree = "<group>"; };
+		42BCC9481241202C001795B1 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* kale-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "kale-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -294,6 +306,12 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				42BCC9431241202C001795B1 /* Icon-72.png */,
+				42BCC9441241202C001795B1 /* Icon-114.png */,
+				42BCC9451241202C001795B1 /* Icon-Small-50.png */,
+				42BCC9461241202C001795B1 /* Icon-Small-58.png */,
+				42BCC9471241202C001795B1 /* Icon-Small.png */,
+				42BCC9481241202C001795B1 /* Icon.png */,
 				420ED7AE121F89A2004AA074 /* media */,
 				28AD733E0D9D9553002E5188 /* MainWindow.xib */,
 				8D1107310486CEB800E47090 /* kale-Info.plist */,
@@ -562,6 +580,12 @@
 			files = (
 				28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */,
 				420ED7B9121F89A2004AA074 /* media in Resources */,
+				42BCC9491241202C001795B1 /* Icon-72.png in Resources */,
+				42BCC94A1241202C001795B1 /* Icon-114.png in Resources */,
+				42BCC94B1241202C001795B1 /* Icon-Small-50.png in Resources */,
+				42BCC94C1241202C001795B1 /* Icon-Small-58.png in Resources */,
+				42BCC94D1241202C001795B1 /* Icon-Small.png in Resources */,
+				42BCC94E1241202C001795B1 /* Icon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

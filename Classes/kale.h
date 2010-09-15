@@ -54,6 +54,10 @@ public:
 	virtual void Accelerate(float g_x, float g_y, float g_z);
 	virtual void Shake();
 	
+	void SetIsAutoMode(bool is_auto_mode);
+	
+	void NotifyBlackMaskBetweenFadeInOut();
+	
 	inline static kaleApp& Ins()
 	{
 		if (!ins_ptr_)	ins_ptr_ = new kaleApp();
@@ -65,7 +69,6 @@ public:
 		return ins_ptr_;
 	}
 	
-	inline void set_is_auto_mode(bool is_auto_mode) { is_auto_mode_ = is_auto_mode; auto_choose_remain_time_ = 0.0f; }
 	inline bool is_auto_mode() { return is_auto_mode_; }
 	inline void set_is_sound_on(bool is_sound_on) { is_sound_on_ = is_sound_on; }
 	inline bool is_sound_on() {return is_sound_on_; }
@@ -80,12 +83,15 @@ private:
 	void InitPhysics();
 	void InitBoundary();
 	
-	void ResetCollisionObjs();
+	void ResetCollisionObjs(bool is_first_time = false);
 	void ClearCollisionObjs();
 	
 	void UpdateAuto(float delta_time);
 	void UpdateWorldTransform(float delta_time);
 	void UpdateAtmosphere(float delta_time);
+	
+	void LoadOption();
+	void SaveOption();
 	
 	static kaleApp*			ins_ptr_;
 	
@@ -114,12 +120,14 @@ private:
 	BlackMask*				black_mask_;
 	MenuButton*				menu_button_;
 	Menu*					menu_;
+
+	float					wait_button_remain_time_;
+	float					auto_choose_g_remain_time_;
+	float					auto_reset_remain_time_;
 	
 	bool					is_menu_mode_;
 	bool					is_auto_mode_;
 	bool					is_sound_on_;
-	
-	float					auto_choose_remain_time_;
 	
 	int						mask_layer_, ui_layer_, ui_layer2_;
 };
