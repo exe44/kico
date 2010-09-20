@@ -126,10 +126,17 @@ public:
 	void Click(const ERI::Vector3& world_pos);
 	
 private:
+	void SetupAutoMode();
+	
+	static const float	auto_pic_change_time_;
+	
 	kaleApp*			app_ref_;
 	
 	ERI::SpriteActor*	sound_;
 	ERI::SpriteActor*	auto_;
+	
+	int					auto_pic_idx_;
+	float				auto_pic_change_remain_time_;
 	
 	ERI::TxtActor*		txt_;
 	ERI::TxtActor*		txt2_;

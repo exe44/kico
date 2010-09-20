@@ -89,7 +89,6 @@ void kaleApp::Init()
 	
 	Hoimi::AudioManager::Instance().Initial();
 	Hoimi::AudioManager::Instance().LoadSound("ding");
-	//Hoimi::AudioManager::Instance().LoadSound("click");
 	
 	Root::Ins().input_mgr()->set_handler(this);
 	

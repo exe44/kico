@@ -341,6 +341,8 @@ void BlackMask::Show()
 
 #pragma mark Menu
 
+const float	Menu::auto_pic_change_time_ = 0.25f;
+
 Menu::Menu(kaleApp* app) :
 	app_ref_(app)
 {
@@ -376,13 +378,13 @@ Menu::Menu(kaleApp* app) :
 
 	auto_ = new SpriteActor(32, 32);
 	auto_->set_area_border(16);
-	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
 	auto_->BlendAdd();
 	auto_->AddToScene(app_ref_->ui_layer2());
 	auto_->SetPos(Vector3(0, 50, 10));
 	auto_->SetColor(Color(1, 1, 1, 0));
 	Root::Ins().scene_mgr()->current_cam()->AddChild(auto_);
 	
+	SetupAutoMode();
 
 	fade_in_morpher_ = new Morpher<float>(4.0f, 0.0f);
 	fade_out_morpher_ = new Morpher<float>(4.0f, 0.0f);
@@ -401,6 +403,20 @@ Menu::~Menu()
 
 void Menu::Update(float delta_time)
 {
+	if (app_ref_->is_auto_mode())
+	{
+		auto_pic_change_remain_time_ -= delta_time;
+		if (auto_pic_change_remain_time_ <= 0.0f)
+		{
+			++auto_pic_idx_;
+			if (auto_pic_idx_ > 1) auto_pic_idx_ = 0;
+			
+			auto_->SetMaterial(auto_pic_idx_ ? "media/auto4.png" : "media/auto5.png", FILTER_LINEAR, FILTER_LINEAR);
+			
+			auto_pic_change_remain_time_ = auto_pic_change_time_;
+		}
+	}
+	
 	if (!fade_in_morpher_->IsFinished())
 	{
 		fade_in_morpher_->Update(delta_time);
@@ -503,14 +519,22 @@ void Menu::Click(const ERI::Vector3& world_pos)
 	{
 		app_ref_->set_is_sound_on(!app_ref_->is_sound_on());
 		sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
-		
-		//Hoimi::AudioManager::Instance().PlaySound("click");
 	}
 	else if (auto_->IsHit(world_pos))
 	{
 		app_ref_->SetIsAutoMode(!app_ref_->is_auto_mode());
-		auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto3.png" : "media/auto_off2.png", FILTER_LINEAR, FILTER_LINEAR);
 		
-		//Hoimi::AudioManager::Instance().PlaySound("click");
+		SetupAutoMode();
+	}
+}
+
+void Menu::SetupAutoMode()
+{
+	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto4.png" : "media/auto_off3.png", FILTER_LINEAR, FILTER_LINEAR);
+	
+	if (app_ref_->is_auto_mode())
+	{
+		auto_pic_idx_ = 0;
+		auto_pic_change_remain_time_ = auto_pic_change_time_;
 	}
 }
