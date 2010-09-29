@@ -282,9 +282,9 @@ void kaleApp::Update(float delta_time)
 	menu_->Update(delta_time);
 }
 
-void kaleApp::Click(int screen_x, int screen_y)
+void kaleApp::Click(const ERI::InputEvent& event)
 {
-	Vector3 pos = Root::Ins().scene_mgr()->ScreenToWorldPos(screen_x, screen_y);
+	Vector3 pos = Root::Ins().scene_mgr()->ScreenToWorldPos(event.x, event.y);
 	if (menu_button_->IsHit(pos))
 	{
 		if (is_menu_mode_)
@@ -317,14 +317,14 @@ void kaleApp::Click(int screen_x, int screen_y)
 	}
 }
 
-void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
+void kaleApp::MultiMove(const ERI::InputEvent* events, int num, bool is_start)
 {
 	static float distance = 0;
 	
 	ASSERT(num > 1);
 	
-	float x_diff = moves[1].x - moves[0].x;
-	float y_diff = moves[1].y - moves[0].y;
+	float x_diff = events[1].x - events[0].x;
+	float y_diff = events[1].y - events[0].y;
 	float now_distance = sqrt(x_diff * x_diff + y_diff * y_diff);
 	
 	if (!is_start)
@@ -339,16 +339,14 @@ void kaleApp::MultiMove(const ERI::Vector2* moves, int num, bool is_start)
 	distance = now_distance;
 }
 
-void kaleApp::Accelerate(float g_x, float g_y, float g_z)
+void kaleApp::Accelerate(const Vector3& g)
 {
 	if (is_auto_mode_)
 		return;
 	
-	world_->SetGravity(b2Vec2(g_x * 20, g_y * 20));
+	world_->SetGravity(b2Vec2(g.x * 20, g.y * 20));
 	
-	accelerator_g_.x = g_x;
-	accelerator_g_.y = g_y;
-	accelerator_g_.z = g_z;
+	accelerator_g_ = g;
 	
 	for (int i = 0; i < collision_bodys_.size(); ++i)
 	{

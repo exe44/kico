@@ -49,9 +49,9 @@ public:
 	
 	void Update(float delta_time);
 	
-	virtual void Click(int screen_x, int screen_y);
-	virtual void MultiMove(const ERI::Vector2* moves, int num, bool is_start);
-	virtual void Accelerate(float g_x, float g_y, float g_z);
+	virtual void Click(const ERI::InputEvent& event);
+	virtual void MultiMove(const ERI::InputEvent* events, int num, bool is_start);
+	virtual void Accelerate(const ERI::Vector3& g);
 	virtual void Shake();
 	
 	void SetIsAutoMode(bool is_auto_mode);
