@@ -11,6 +11,9 @@
 
 #include <cmath>
 
+#include "root.h"
+#include "renderer.h"
+
 #include "kale.h"
 
 using namespace ERI;
@@ -123,11 +126,13 @@ void TriangleMirror::UpdateVertexBuffer()
 
 Mirror::Mirror(kaleApp* app) : app_ref_(app)
 {
+	float content_scale = Root::Ins().renderer()->content_scale();
+	
 	mirror_cam_ = new CameraActor();
 	mirror_cam_->SetPos(0, app_ref_->kBoundaryHalfSize);
-	mirror_cam_->SetOrthoZoom(16);
+	mirror_cam_->SetOrthoZoom(16 * content_scale);
 	
-	mirror_texture_ = new RenderToTexture(256, 256, mirror_cam_);
+	mirror_texture_ = new RenderToTexture(256 * content_scale, 256 * content_scale, mirror_cam_);
 	mirror_texture_->Init();
 	
 	mirror_dark_corner_mask_ = new SpriteActor(app_ref_->kBoundaryHalfSize * 2 + 8, app_ref_->kBoundaryHalfSize * 2 + 8);
@@ -135,9 +140,10 @@ Mirror::Mirror(kaleApp* app) : app_ref_(app)
 	mirror_dark_corner_mask_->SetPos(Vector3(0, app_ref_->kBoundaryHalfSize * 0.7f, 2));
 	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
 	
-	mirror_ = new TriangleMirror(50, 7, 9);
+	mirror_ = new TriangleMirror(50 * content_scale, 7, 9);
 	mirror_->AddToScene();
 	mirror_->SetMaterial(mirror_texture_->texture(), FILTER_LINEAR, FILTER_LINEAR);
+	mirror_->SetOpacityType(OPACITY_OPAQUE);
 	
 	mirror_debug_ = new SpriteActor(256, 256);
 	mirror_debug_->AddToScene();

@@ -50,9 +50,10 @@ static void UpdateFPS(float delta_time)
 	
 	++frame_count;
 	frame_count_timer += delta_time;
-	if (frame_count_timer >= 0.25f)
+	if (frame_count_timer >= 1.0f)
 	{
-		fps_number->SetNumber(static_cast<int>(frame_count / frame_count_timer));
+		//fps_number->SetNumber(static_cast<int>(frame_count / frame_count_timer));
+		//printf("fps: %d\n", static_cast<int>(frame_count / frame_count_timer));
 		
 		frame_count = 0;
 		frame_count_timer = 0;
@@ -85,9 +86,12 @@ kaleApp::~kaleApp()
 
 void kaleApp::Init()
 {
+	float content_scale = Root::Ins().renderer()->content_scale();
+	
 	LoadOption();
 	
 	Hoimi::AudioManager::Instance().Initial();
+	Hoimi::AudioManager::Instance().SetSoundEffectsVolume(0.5f);
 	Hoimi::AudioManager::Instance().LoadSound("ding");
 	
 	Root::Ins().input_mgr()->set_handler(this);
@@ -131,7 +135,7 @@ void kaleApp::Init()
 	
 	fps_number = new NumberActor(10, 14, "media/num.png", 5, 7, false);
 	fps_number->AddToScene(ui_layer2_);
-	fps_number->SetPos(Vector3(130, 210, 10));
+	fps_number->SetPos(Vector3(130 * content_scale, 210 * content_scale, 10));
 	fps_number->SetColor(Color(0.1f, 0.1f, 0.1f));
 	fps_number->BlendAdd();
 	cam_->AddChild(fps_number);
@@ -147,7 +151,7 @@ void kaleApp::Init()
 	
 	//
 	
-	screen_dark_corner_mask_ = new SpriteActor(320, 480);
+	screen_dark_corner_mask_ = new SpriteActor(320 * content_scale, 480 * content_scale);
 	screen_dark_corner_mask_->AddToScene(mask_layer_);
 	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
 	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
