@@ -53,7 +53,7 @@ static void UpdateFPS(float delta_time)
 	if (frame_count_timer >= 1.0f)
 	{
 		//fps_number->SetNumber(static_cast<int>(frame_count / frame_count_timer));
-		//printf("fps: %d\n", static_cast<int>(frame_count / frame_count_timer));
+		printf("fps: %d\n", static_cast<int>(frame_count / frame_count_timer));
 		
 		frame_count = 0;
 		frame_count_timer = 0;
@@ -217,7 +217,8 @@ void kaleApp::Update(float delta_time)
 		UpdateAuto(delta_time);
 	}
 	
-	UpdateFPS(delta_time);
+	//UpdateFPS(delta_time);
+	
 	UpdateWorldTransform(delta_time);
 	UpdateAtmosphere(delta_time);
 
