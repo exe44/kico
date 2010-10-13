@@ -44,7 +44,9 @@ static EAGLView* gl_view;
 	ERI::Root::Ins().renderer()->SetViewOrientation(ERI::PORTRAIT_HOME_BOTTOM);
 	
 	if ([UIScreen instancesRespondToSelector:@selector(scale)])
+	{
 		ERI::Root::Ins().renderer()->set_content_scale([[UIScreen mainScreen] scale]);
+	}
 	
 	// create the OpenGL view and add it to the window
 	gl_view = [[EAGLView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
