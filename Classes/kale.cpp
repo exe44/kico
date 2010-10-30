@@ -174,6 +174,11 @@ void kaleApp::OnTerminate()
 	SaveOption();
 }
 
+void kaleApp::OnResignActive()
+{
+	SaveOption();
+}
+
 void kaleApp::Release()
 {
 	delete menu_;

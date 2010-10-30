@@ -45,6 +45,7 @@ public:
 	
 	void Init();
 	void OnTerminate();
+	void OnResignActive();
 	void Release();
 	
 	void Update(float delta_time);

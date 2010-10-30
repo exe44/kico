@@ -68,6 +68,11 @@ static EAGLView* gl_view;
 	kaleApp::Ins().OnTerminate();
 }
 
+- (void)applicationWillResignActive:(UIApplication *)application
+{
+	kaleApp::Ins().OnResignActive();
+}
+
 - (void)dealloc
 {
 	kaleApp::Ins().Release();
