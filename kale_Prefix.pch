@@ -7,6 +7,9 @@
     #import <UIKit/UIKit.h>
 #endif
 
+#define ERI_2D_VIEW
+#define ERI_TEXTURE_READER_NO_LIBPNG
+#define ERI_TEXTURE_READER_NO_PVR
 
 #include "pch.h"
 

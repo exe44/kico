@@ -31,7 +31,7 @@ namespace ERI
 class LogoShower : public Updater
 {
 public:
-	LogoShower(kaleApp* app);
+	LogoShower();
 	virtual ~LogoShower();
 	
 	virtual void Update(float delta_time);
@@ -42,8 +42,6 @@ public:
 	inline bool is_finished() { return is_finished_; }
 	
 private:
-	kaleApp*			app_ref_;
-	
 	ERI::TxtActor*		logo_;
 	
 	Morpher<float>*		logo_fade_in_morpher_;
@@ -58,8 +56,10 @@ private:
 class MenuButton : public Updater
 {
 public:
-	MenuButton(kaleApp* app);
+	MenuButton();
 	virtual ~MenuButton();
+	
+	void RefreshScreenSize(float screen_width, float screen_height);
 	
 	virtual void Update(float delta_time);
 	
@@ -75,8 +75,6 @@ public:
 	void NotifyAtmosphereChange(const ERI::Color& atmosphere_color);
 	
 private:
-	kaleApp*			app_ref_;
-	
 	ERI::SpriteActor*	button_;
 
 	Morpher<float>*		fade_in_morpher_;
@@ -90,6 +88,8 @@ class BlackMask : public Updater
 public:
 	BlackMask(kaleApp* app);
 	virtual ~BlackMask();
+	
+	void SetSize(float width, float height);
 	
 	virtual void Update(float delta_time);
 	
@@ -140,7 +140,6 @@ private:
 	
 	ERI::TxtActor*		txt_;
 	ERI::TxtActor*		txt2_;
-	ERI::TxtActor*		txt3_;
 	
 	Morpher<float>*		fade_in_morpher_;
 	Morpher<float>*		fade_out_morpher_;

@@ -17,7 +17,7 @@
 
 @implementation kaleAppDelegate
 
-@synthesize window;
+@synthesize window = _window;
 
 static EAGLView* gl_view;
 
@@ -39,6 +39,8 @@ static EAGLView* gl_view;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
+	self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
+	
 	// init ERI
 	ERI::Root::Ins().Init(false);
 	ERI::Root::Ins().renderer()->SetViewOrientation(ERI::PORTRAIT_HOME_BOTTOM);
@@ -51,7 +53,7 @@ static EAGLView* gl_view;
 	// create the OpenGL view and add it to the window
 	gl_view = [[EAGLView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 	[gl_view enableAccelerometer:YES withTimeInterval:1.0/10.0];
-	[window addSubview:gl_view];
+	[self.window addSubview:gl_view];
 	
 	// init App
 	kaleApp::Ins().Init();
@@ -60,7 +62,7 @@ static EAGLView* gl_view;
 	[NSTimer scheduledTimerWithTimeInterval:0 target:self selector:@selector(update) userInfo:nil repeats:YES];	
 	
     // Override point for customization after application launch
-    [window makeKeyAndVisible];
+    [self.window makeKeyAndVisible];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -75,10 +77,10 @@ static EAGLView* gl_view;
 
 - (void)dealloc
 {
-	kaleApp::Ins().Release();
+	kaleApp::KillIns();
 	
 	[gl_view release];
-    [window release];
+    [_window release];
     [super dealloc];
 }
 

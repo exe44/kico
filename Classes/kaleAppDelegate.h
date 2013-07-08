@@ -8,11 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-@interface kaleAppDelegate : NSObject <UIApplicationDelegate> {
-    UIWindow *window;
-}
+@interface kaleAppDelegate : NSObject <UIApplicationDelegate>
 
-@property (nonatomic, retain) IBOutlet UIWindow *window;
+@property (nonatomic, retain) UIWindow *window;
 
 @end
 

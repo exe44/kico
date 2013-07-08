@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "input_mgr.h"
+#include "scene_mgr.h"
 #include "math_helper.h"
 
 namespace ERI
@@ -37,7 +38,16 @@ class MenuButton;
 class Menu;
 template<class> class Morpher;
 
-class kaleApp : public ERI::InputHandler
+enum LayerType
+{
+	LAYER_SCENE = 0,
+	LAYER_MASK,
+	LAYER_UI,
+	LAYER_UI2,
+	LAYER_MAX
+};
+
+class kaleApp : public ERI::Observer<ERI::SceneMgr::ResizeInfo>, public ERI::InputHandler
 {
 public:
 	kaleApp();
@@ -55,6 +65,8 @@ public:
 	virtual void Accelerate(const ERI::Vector3& g);
 	virtual void Shake();
 	
+	virtual void OnNotified(ERI::SceneMgr::ResizeInfo& info);
+	
 	void SetIsAutoMode(bool is_auto_mode);
 	
 	void NotifyBlackMaskBetweenFadeInOut();
@@ -64,19 +76,19 @@ public:
 		if (!ins_ptr_)	ins_ptr_ = new kaleApp();
 		return *ins_ptr_;
 	}
-	inline static kaleApp* InsPtr()
+	
+	inline static void KillIns()
 	{
-		if (!ins_ptr_)	ins_ptr_ = new kaleApp();
-		return ins_ptr_;
+		if (ins_ptr_)
+		{
+			delete ins_ptr_;
+			ins_ptr_ = NULL;
+		}
 	}
 	
 	inline bool is_auto_mode() { return is_auto_mode_; }
 	inline void set_is_sound_on(bool is_sound_on) { is_sound_on_ = is_sound_on; }
 	inline bool is_sound_on() {return is_sound_on_; }
-	
-	inline int mask_layer() { return mask_layer_; }
-	inline int ui_layer() { return ui_layer_; }
-	inline int ui_layer2() { return ui_layer2_; }
 	
 	static const int kBoundaryHalfSize;
 	
@@ -97,6 +109,8 @@ private:
 	static kaleApp*			ins_ptr_;
 	
 	ERI::CameraActor*		cam_;
+	ERI::CameraActor*		scene_cam_;
+	
 	ERI::LightActor*		light_;
 
 	Mirror*					mirror_;
@@ -129,8 +143,6 @@ private:
 	bool					is_menu_mode_;
 	bool					is_auto_mode_;
 	bool					is_sound_on_;
-	
-	int						mask_layer_, ui_layer_, ui_layer2_;
 };
 
 #endif // KALE_KALE_H

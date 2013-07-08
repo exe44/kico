@@ -124,29 +124,31 @@ void TriangleMirror::UpdateVertexBuffer()
 
 #pragma mark Mirror
 
-Mirror::Mirror(kaleApp* app) : app_ref_(app)
+Mirror::Mirror(kaleApp* app)
 {
+	ASSERT(app);
+	
 	float content_scale = Root::Ins().renderer()->content_scale();
 	
 	mirror_cam_ = new CameraActor();
-	mirror_cam_->SetPos(0, app_ref_->kBoundaryHalfSize);
+	mirror_cam_->SetPos(0, app->kBoundaryHalfSize);
 	mirror_cam_->SetOrthoZoom(16 * content_scale);
 	
-	mirror_texture_ = new RenderToTexture(256 * content_scale, 256 * content_scale, mirror_cam_);
+	mirror_texture_ = new RenderToTexture(0, 0, 256 * content_scale, 256 * content_scale, mirror_cam_);
 	mirror_texture_->Init();
 	
-	mirror_dark_corner_mask_ = new SpriteActor(app_ref_->kBoundaryHalfSize * 2 + 8, app_ref_->kBoundaryHalfSize * 2 + 8);
-	mirror_dark_corner_mask_->AddToScene(app_ref_->ui_layer());
-	mirror_dark_corner_mask_->SetPos(Vector3(0, app_ref_->kBoundaryHalfSize * 0.7f, 2));
+	mirror_dark_corner_mask_ = new SpriteActor(app->kBoundaryHalfSize * 2 + 8, app->kBoundaryHalfSize * 2 + 8);
+	mirror_dark_corner_mask_->AddToScene(LAYER_UI);
+	mirror_dark_corner_mask_->SetPos(Vector3(0, app->kBoundaryHalfSize * 0.7f, 2));
 	mirror_dark_corner_mask_->SetMaterial("media/mask.png", FILTER_LINEAR, FILTER_LINEAR);
 	
-	mirror_ = new TriangleMirror(50 * content_scale, 7, 9);
+	mirror_ = new TriangleMirror(50, 13, 13);
 	mirror_->AddToScene();
 	mirror_->SetMaterial(mirror_texture_->texture(), FILTER_LINEAR, FILTER_LINEAR);
 	mirror_->SetOpacityType(OPACITY_OPAQUE);
 	
 	mirror_debug_ = new SpriteActor(256, 256);
-	mirror_debug_->AddToScene();
+	mirror_debug_->AddToScene(LAYER_UI2);
 	mirror_debug_->SetMaterial(mirror_texture_->texture());
 	mirror_debug_->SetTexAreaUV(0.0f, 1.0f, 1.0f, -1.0f);
 }
@@ -162,16 +164,21 @@ Mirror::~Mirror()
 
 void Mirror::Make()
 {
-	mirror_dark_corner_mask_->set_visible(true);
-	mirror_->set_visible(false);
-	mirror_debug_->set_visible(false);
+	mirror_dark_corner_mask_->SetVisible(true);
+	mirror_->SetVisible(false);
+	mirror_debug_->SetVisible(false);
+	
+	CameraActor* scene_cam = Root::Ins().scene_mgr()->GetLayerCam(LAYER_SCENE);
+	Root::Ins().scene_mgr()->SetLayerCam(LAYER_SCENE, NULL);
 	
 	mirror_texture_->ProcessRender();
+	
+	Root::Ins().scene_mgr()->SetLayerCam(LAYER_SCENE, scene_cam);
 }
 
 void Mirror::Show()
 {
-	mirror_dark_corner_mask_->set_visible(false);
-	mirror_->set_visible(true);
-	//mirror_debug_->set_visible(true);
+	mirror_dark_corner_mask_->SetVisible(false);
+	mirror_->SetVisible(true);
+//	mirror_debug_->SetVisible(true);
 }

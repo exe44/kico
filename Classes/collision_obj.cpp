@@ -33,12 +33,12 @@ void CollisionObj::Update(float delta_time)
 	
 	if (glow_remain_time_ <= 0.0f)
 	{
-		//glow_obj_->set_visible(false);
+		//glow_obj_->SetVisible(false);
 	}
 	else
 	{
 		glow_obj_->SetColor(GetColor() * (glow_remain_time_ / kGlowTotalTime) * 1.0f);
-		glow_obj_->set_visible(true);
+		glow_obj_->SetVisible(true);
 	}
 }
 

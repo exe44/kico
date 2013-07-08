@@ -13,6 +13,7 @@
 #include "renderer.h"
 #include "scene_mgr.h"
 #include "scene_actor.h"
+#include "txt_actor.h"
 #include "audio_manager.h"
 
 #include "kale.h"
@@ -25,20 +26,17 @@ using namespace ERI;
 static const float kWaitLogoTime = 3.0f;
 static const float kLogoKeepTime = 2.0f;
 
-LogoShower::LogoShower(kaleApp* app) :
-	app_ref_(app),
+LogoShower::LogoShower() :
 	wait_logo_remain_time_(kWaitLogoTime),
 	logo_keep_remain_time_(kLogoKeepTime),
 	is_finished_(false)
 {
-	float content_scale = Root::Ins().renderer()->content_scale();
-
-	logo_ = new TxtActor("k i c o", "futura", 26 * content_scale);
-	logo_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	logo_->AddToScene(app_ref_->ui_layer2());
-	logo_->SetPos(Vector3(-120 * content_scale, 40 * content_scale, 5));
+	logo_ = new TxtActor("Futura", 26);
+	logo_->SetResolutionScale(Root::Ins().renderer()->content_scale());
+	logo_->SetTxt("k i c o");
+	logo_->AddToScene(LAYER_UI);
+	logo_->SetPos(Vector3(-120, 40, 4));
 	logo_->SetColor(Color(1, 1, 1, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(logo_);
 	
 	logo_fade_in_morpher_ = new Morpher<float>(0.75f, 0.0f);
 	logo_fade_in_morpher_->SetCurrent(0.0f);
@@ -100,31 +98,27 @@ void LogoShower::Update(float delta_time)
 
 void LogoShower::Hide()
 {
-	logo_->set_visible(false);
+	logo_->SetVisible(false);
 }
 
 void LogoShower::Show()
 {
-	if (logo_->GetColor().a > 0.0f) logo_->set_visible(true);
+	if (logo_->GetColor().a > 0.0f) logo_->SetVisible(true);
 }
 
 #pragma mark MenuButton
 
-MenuButton::MenuButton(kaleApp* app) :
-	app_ref_(app),
+MenuButton::MenuButton() :
 	keep_remain_time_(0.0f)
 {
-	float content_scale = Root::Ins().renderer()->content_scale();
-
-	button_ = new SpriteActor(32 * content_scale, 32 * content_scale);
-	button_->set_area_border(16 * content_scale);
+	button_ = new SpriteActor(32, 32);
+	button_->set_area_border(16);
 	button_->SetMaterial("media/menu3.png", FILTER_LINEAR, FILTER_LINEAR);
 	button_->BlendAdd();
-	button_->SetPos(Vector3(115 * content_scale, -200 * content_scale, 4));
+	button_->SetPos(Vector3(0, 0, 4));
 	button_->SetRotate(5);
-	button_->AddToScene(app_ref_->ui_layer2());
+	button_->AddToScene(LAYER_UI);
 	button_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(button_);
 	
 	fade_in_morpher_ = new Morpher<float>(1.0f, 0.0f);
 	fade_out_morpher_ = new Morpher<float>(1.0f, 0.0f);
@@ -135,6 +129,11 @@ MenuButton::~MenuButton()
 	delete fade_out_morpher_;
 	delete fade_in_morpher_;
 	delete button_;
+}
+
+void MenuButton::RefreshScreenSize(float screen_width, float screen_height)
+{
+	button_->SetPos(screen_width * 0.5f - 45, -screen_height * 0.5f + 40);
 }
 
 void MenuButton::Update(float delta_time)
@@ -212,12 +211,12 @@ void MenuButton::FadeInOut()
 
 void MenuButton::Hide()
 {
-	button_->set_visible(false);
+	button_->SetVisible(false);
 }
 
 void MenuButton::Show()
 {
-	if (button_->GetColor().a > 0.0f) button_->set_visible(true);
+	if (button_->GetColor().a > 0.0f) button_->SetVisible(true);
 }
 
 bool MenuButton::IsHit(const ERI::Vector3& world_pos)
@@ -238,13 +237,10 @@ void MenuButton::NotifyAtmosphereChange(const ERI::Color& atmosphere_color)
 BlackMask::BlackMask(kaleApp* app) :
 	app_ref_(app)
 {
-	float content_scale = Root::Ins().renderer()->content_scale();
-
-	mask_ = new SpriteActor(320 * content_scale, 480 * content_scale);
-	mask_->AddToScene(app_ref_->ui_layer());
+	mask_ = new SpriteActor(10, 10);
+	mask_->AddToScene(LAYER_UI2);
 	mask_->SetPos(Vector3(0, 0, 5));
 	mask_->SetColor(Color(0, 0, 0, 1));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(mask_);
 	
 	fade_in_morpher_ = new Morpher<float>(1.0f, 0.0f);
 	fade_out_morpher_ = new Morpher<float>(1.0f, 0.0f);
@@ -255,6 +251,11 @@ BlackMask::~BlackMask()
 	delete fade_out_morpher_;
 	delete fade_in_morpher_;
 	delete mask_;
+}
+
+void BlackMask::SetSize(float width, float height)
+{
+	mask_->SetSizeOffset(width, height);
 }
 
 void BlackMask::Update(float delta_time)
@@ -338,12 +339,12 @@ void BlackMask::FadeInOut(float in_time, float out_time)
 
 void BlackMask::Hide()
 {
-	mask_->set_visible(false);
+	mask_->SetVisible(false);
 }
 
 void BlackMask::Show()
 {
-	if (mask_->GetColor().a > 0.0f) mask_->set_visible(true);
+	if (mask_->GetColor().a > 0.0f) mask_->SetVisible(true);
 }
 
 #pragma mark Menu
@@ -354,48 +355,35 @@ Menu::Menu(kaleApp* app) :
 	app_ref_(app)
 {
 	float content_scale = Root::Ins().renderer()->content_scale();
-
-	txt_ = new TxtActor("KICO by exe", "futura", 16 * content_scale, true);
-	txt_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	txt_->AddToScene(app_ref_->ui_layer2());
-	txt_->SetPos(Vector3(0, -60 * content_scale, 10));
+	
+	txt_ = new TxtActor("Futura", 16, true);
+	txt_->SetResolutionScale(content_scale);
+	txt_->SetTxt("KICO by exe");
+	txt_->AddToScene(LAYER_UI2);
+	txt_->SetPos(Vector3(0, -60, 10));
 	txt_->SetColor(Color(1, 1, 1, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(txt_);
 	
-	//txt2_ = new TxtActor("(C) 2010 Wallmud & Exe", "futura", 14 * content_scale, true);
-	txt2_ = new TxtActor("(C) 2010 All rights reserved.", "futura", 14 * content_scale, true);
-	txt2_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	txt2_->AddToScene(app_ref_->ui_layer2());
-	//txt2_->SetPos(Vector3(0, -85 * content_scale, 10));
-	txt2_->SetPos(Vector3(0, -80 * content_scale, 10));
-	txt2_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(txt2_);
-	
-	/*
-	txt3_ = new TxtActor("All rights reserved.", "futura", 14 * content_scale, true);
-	txt3_->SetTextureFilter(ERI::FILTER_LINEAR, ERI::FILTER_LINEAR);
-	txt3_->AddToScene(app_ref_->ui_layer2());
-	txt3_->SetPos(Vector3(0, -100 * content_scale, 10));
-	txt3_->SetColor(Color(0.5f, 0.5f, 0.5f, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(txt3_);
-	 */
-	
-	sound_ = new SpriteActor(32 * content_scale, 32 * content_scale);
-	sound_->set_area_border(16 * content_scale);
+	txt2_ = new TxtActor("Futura", 14, true);
+	txt2_->SetResolutionScale(content_scale);
+	txt2_->SetTxt("© 2010 All rights reserved.");
+	txt2_->AddToScene(LAYER_UI2);
+	txt2_->SetPos(Vector3(0, -80, 10));
+	txt2_->SetColor(Color(0.66f, 0.66f, 0.66f, 0));
+		
+	sound_ = new SpriteActor(32, 32);
+	sound_->set_area_border(16);
 	sound_->SetMaterial(app_ref_->is_sound_on() ? "media/sound.png" : "media/sound_off.png", FILTER_LINEAR, FILTER_LINEAR);
 	sound_->BlendAdd();
-	sound_->AddToScene(app_ref_->ui_layer2());
-	sound_->SetPos(Vector3(0, 130 * content_scale, 10));
+	sound_->AddToScene(LAYER_UI2);
+	sound_->SetPos(Vector3(0, 130, 10));
 	sound_->SetColor(Color(1, 1, 1, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(sound_);
 
-	auto_ = new SpriteActor(32 * content_scale, 32 * content_scale);
-	auto_->set_area_border(16 * content_scale);
+	auto_ = new SpriteActor(32, 32);
+	auto_->set_area_border(16);
 	auto_->BlendAdd();
-	auto_->AddToScene(app_ref_->ui_layer2());
-	auto_->SetPos(Vector3(0, 50 * content_scale, 10));
+	auto_->AddToScene(LAYER_UI2);
+	auto_->SetPos(Vector3(0, 50, 10));
 	auto_->SetColor(Color(1, 1, 1, 0));
-	Root::Ins().scene_mgr()->current_cam()->AddChild(auto_);
 	
 	SetupAutoMode();
 
@@ -409,7 +397,6 @@ Menu::~Menu()
 	delete fade_in_morpher_;
 	delete auto_;
 	delete sound_;
-	//delete txt3_;
 	delete txt2_;
 	delete txt_;
 }
@@ -424,7 +411,7 @@ void Menu::Update(float delta_time)
 			++auto_pic_idx_;
 			if (auto_pic_idx_ > 1) auto_pic_idx_ = 0;
 			
-			auto_->SetMaterial(auto_pic_idx_ ? "media/auto4.png" : "media/auto5.png", FILTER_LINEAR, FILTER_LINEAR);
+			auto_->SetMaterial(auto_pic_idx_ ? "media/auto_1.png" : "media/auto_2.png", FILTER_LINEAR, FILTER_LINEAR);
 			
 			auto_pic_change_remain_time_ = auto_pic_change_time_;
 		}
@@ -441,12 +428,6 @@ void Menu::Update(float delta_time)
 		color = txt2_->GetColor();
 		color.a = fade_in_morpher_->current_value();
 		txt2_->SetColor(color);
-
-		/*
-		color = txt3_->GetColor();
-		color.a = fade_in_morpher_->current_value();
-		txt3_->SetColor(color);
-		 */
 		
 		color = sound_->GetColor();
 		color.a = fade_in_morpher_->current_value();
@@ -470,12 +451,6 @@ void Menu::Update(float delta_time)
 		color = txt2_->GetColor();
 		color.a = fade_out_morpher_->current_value();
 		txt2_->SetColor(color);
-		
-		/*
-		color = txt3_->GetColor();
-		color.a = fade_out_morpher_->current_value();
-		txt3_->SetColor(color);
-		 */
 		
 		color = sound_->GetColor();
 		color.a = fade_out_morpher_->current_value();
@@ -511,22 +486,20 @@ void Menu::FadeOut()
 
 void Menu::Hide()
 {
-	txt_->set_visible(false);
-	txt2_->set_visible(false);
-	//txt3_->set_visible(false);
-	sound_->set_visible(false);
-	auto_->set_visible(false);
+	txt_->SetVisible(false);
+	txt2_->SetVisible(false);
+	sound_->SetVisible(false);
+	auto_->SetVisible(false);
 }
 
 void Menu::Show()
 {
 	if (txt_->GetColor().a > 0.0f)
 	{
-		txt_->set_visible(true);
-		txt2_->set_visible(true);
-		//txt3_->set_visible(true);
-		sound_->set_visible(true);
-		auto_->set_visible(true);
+		txt_->SetVisible(true);
+		txt2_->SetVisible(true);
+		sound_->SetVisible(true);
+		auto_->SetVisible(true);
 	}
 }
 
@@ -547,7 +520,7 @@ void Menu::Click(const ERI::Vector3& world_pos)
 
 void Menu::SetupAutoMode()
 {
-	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto4.png" : "media/auto_off3.png", FILTER_LINEAR, FILTER_LINEAR);
+	auto_->SetMaterial(app_ref_->is_auto_mode() ? "media/auto_2.png" : "media/auto_off.png", FILTER_LINEAR, FILTER_LINEAR);
 	
 	if (app_ref_->is_auto_mode())
 	{

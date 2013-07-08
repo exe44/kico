@@ -25,7 +25,7 @@
 using namespace ERI;
 
 static const int kCollisionObjNum = 40;
-static const float kCameraZoomMin = 0.82f;
+static const float kCameraZoomMin = 0.55f;
 static const float kCameraZoomMax = 2.5f;
 static const float kAutoResetTime = 30.0f;
 
@@ -41,6 +41,8 @@ enum ObjType
 
 #pragma mark Testing Usage
 
+//#define SHOW_DEBUG
+#ifdef SHOW_DEBUG
 static NumberActor* fps_number;
 
 static void UpdateFPS(float delta_time)
@@ -59,6 +61,7 @@ static void UpdateFPS(float delta_time)
 		frame_count_timer = 0;
 	}
 }
+#endif
 
 #pragma mark kaleApp
 
@@ -73,10 +76,7 @@ kaleApp::kaleApp() :
 	is_sound_on_(true),
 	wait_button_remain_time_(0.0f),
 	auto_choose_g_remain_time_(0.0f),
-	auto_reset_remain_time_(0.0f),
-	mask_layer_(-1),
-	ui_layer_(-1),
-	ui_layer2_(-1)
+	auto_reset_remain_time_(0.0f)
 {
 }
 
@@ -86,8 +86,6 @@ kaleApp::~kaleApp()
 
 void kaleApp::Init()
 {
-	float content_scale = Root::Ins().renderer()->content_scale();
-	
 	LoadOption();
 	
 	Hoimi::AudioManager::Instance().Initial();
@@ -98,20 +96,27 @@ void kaleApp::Init()
 	
 	//
 	
-	mask_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
-	ui_layer_ = ERI::Root::Ins().scene_mgr()->AddLayer();
-	ui_layer2_ = ERI::Root::Ins().scene_mgr()->AddLayer();
+	ERI::Root::Ins().scene_mgr()->viewport_resize_subject().AddObserver(this);
+
+	ERI::Root::Ins().scene_mgr()->CreateLayer(LAYER_MAX);
+	ERI::Root::Ins().scene_mgr()->SetLayerSortAlpha(LAYER_UI, true);
+	ERI::Root::Ins().scene_mgr()->SetLayerSortAlpha(LAYER_UI2, true);
 	
 	//
 	
 	cam_ = new CameraActor;
-	cam_->AddToScene();
-	Root::Ins().scene_mgr()->SetCurrentCam(cam_);
+	cam_->SetOrthoZoom(Root::Ins().renderer()->content_scale());
+	Root::Ins().scene_mgr()->set_default_cam(cam_);
+	
+	scene_cam_ = new CameraActor;
+	scene_cam_->SetOrthoZoom(Root::Ins().renderer()->content_scale());
+	
+	ERI::Root::Ins().scene_mgr()->SetLayerCam(LAYER_SCENE, scene_cam_);
 	
 	light_ = new LightActor(LightActor::POINT);
 	light_->SetPos(Vector3(0, kBoundaryHalfSize, 10));
 	light_->SetAmbient(Color(0.2f, 0.2f, 0.2f));
-	light_->SetDiffuse(Color(1.0f, 1.0f, 0.75f));
+	light_->SetDiffuse(Color(1.0f, 1.0f, 1.f));
 	light_->SetSpecular(Color(1.0f, 1.0f, 1.0f));
 	light_->SetAttenuation(1.0f, 0.01f, 0.002f);
 	light_->AddToScene();
@@ -123,7 +128,7 @@ void kaleApp::Init()
 	//
 	
 	atmosphere_mask_ = new SpriteActor(kBoundaryHalfSize * 2, kBoundaryHalfSize * 2, 0, kBoundaryHalfSize);
-	atmosphere_mask_->AddToScene(mask_layer_);
+	atmosphere_mask_->AddToScene(LAYER_MASK);
 	atmosphere_mask_->SetPos(Vector3(0, 0, 1));
 	atmosphere_mask_->SetDepthWrite(false);
 	atmosphere_mask_->BlendAdd();
@@ -132,13 +137,16 @@ void kaleApp::Init()
 	atmosphere_v_blender_ = new Morpher<float>(0.2f, 0.05f);
 	
 	//
-	
-	fps_number = new NumberActor(10, 14, "media/num.png", 5, 7, false);
-	fps_number->AddToScene(ui_layer2_);
-	fps_number->SetPos(Vector3(130 * content_scale, 210 * content_scale, 10));
+
+#ifdef SHOW_DEBUG
+	fps_number = new NumberActor(10, 14, false);
+	fps_number->SetMaterial("media/num.png");
+	fps_number->SetTexUnit(5, 7);
+	fps_number->AddToScene(LAYER_UI2);
+	fps_number->SetPos(Vector3(130, 210, 10));
 	fps_number->SetColor(Color(0.1f, 0.1f, 0.1f));
 	fps_number->BlendAdd();
-	cam_->AddChild(fps_number);
+#endif
 	
 	//
 	
@@ -151,17 +159,17 @@ void kaleApp::Init()
 	
 	//
 	
-	screen_dark_corner_mask_ = new SpriteActor(320 * content_scale, 480 * content_scale);
-	screen_dark_corner_mask_->AddToScene(mask_layer_);
+	screen_dark_corner_mask_ = new SpriteActor(10, 10);
+	screen_dark_corner_mask_->AddToScene(LAYER_MASK);
 	screen_dark_corner_mask_->SetPos(Vector3(0, 0, 3));
+	screen_dark_corner_mask_->SetColor(Color(1.f, 1.f, 1.f, 0.95f));
 	screen_dark_corner_mask_->SetMaterial("media/mask_dark.png", FILTER_LINEAR, FILTER_LINEAR);
-	cam_->AddChild(screen_dark_corner_mask_);
 	
 	//
 	
-	logo_shower_ = new LogoShower(this);
+	logo_shower_ = new LogoShower();
 	black_mask_ = new BlackMask(this);
-	menu_button_ = new MenuButton(this);
+	menu_button_ = new MenuButton();
 	menu_ = new Menu(this);
 	
 	//
@@ -202,8 +210,10 @@ void kaleApp::Release()
 	
 	delete contact_listener_;
 	delete world_;
-	
+
+#ifdef SHOW_DEBUG
 	delete fps_number;
+#endif
 	
 	delete atmosphere_v_blender_;
 	Root::Ins().texture_mgr()->ReleaseTexture(atmosphere_texture_);
@@ -212,6 +222,7 @@ void kaleApp::Release()
 	delete mirror_;
 	
 	delete light_;
+	delete scene_cam_;
 	delete cam_;
 }
 
@@ -221,8 +232,10 @@ void kaleApp::Update(float delta_time)
 	{
 		UpdateAuto(delta_time);
 	}
-	
-	//UpdateFPS(delta_time);
+
+#ifdef SHOW_DEBUG
+	UpdateFPS(delta_time);
+#endif
 	
 	UpdateWorldTransform(delta_time);
 	UpdateAtmosphere(delta_time);
@@ -231,13 +244,15 @@ void kaleApp::Update(float delta_time)
 	
 	for (int i = 0; i < collision_objs_.size(); ++i)
 	{
-		collision_objs_[i]->set_visible(true);
+		collision_objs_[i]->SetVisible(true);
 		collision_objs_[i]->Update(delta_time);
 	}
-	atmosphere_mask_->set_visible(true);
+	atmosphere_mask_->SetVisible(true);
 		
-	screen_dark_corner_mask_->set_visible(false);
-	fps_number->set_visible(false);
+	screen_dark_corner_mask_->SetVisible(false);
+#ifdef SHOW_DEBUG
+	fps_number->SetVisible(false);
+#endif
 	if (logo_shower_) logo_shower_->Hide();
 	black_mask_->Hide();
 	menu_button_->Hide();
@@ -249,14 +264,16 @@ void kaleApp::Update(float delta_time)
 	
 	for (int i = 0; i < collision_objs_.size(); ++i)
 	{
-		collision_objs_[i]->set_visible(false);
+		collision_objs_[i]->SetVisible(false);
 		if (collision_objs_[i]->glow_obj())
-			collision_objs_[i]->glow_obj()->set_visible(false);
+			collision_objs_[i]->glow_obj()->SetVisible(false);
 	}
-	atmosphere_mask_->set_visible(false);
+	atmosphere_mask_->SetVisible(false);
 	
-	screen_dark_corner_mask_->set_visible(true);
-	//fps_number->set_visible(true);
+	screen_dark_corner_mask_->SetVisible(true);
+#ifdef SHOW_DEBUG
+	fps_number->SetVisible(true);
+#endif
 	if (logo_shower_) logo_shower_->Show();
 	black_mask_->Show();
 	menu_button_->Show();
@@ -339,11 +356,11 @@ void kaleApp::MultiMove(const ERI::InputEvent* events, int num, bool is_start)
 	
 	if (!is_start)
 	{
-		float now_zoom = cam_->ortho_zoom();
+		float now_zoom = scene_cam_->ortho_zoom() / Root::Ins().renderer()->content_scale();
 		now_zoom += (now_distance - distance) * 0.005f;
 		if (now_zoom < kCameraZoomMin) now_zoom = kCameraZoomMin;
 		if (now_zoom > kCameraZoomMax) now_zoom = kCameraZoomMax;
-		cam_->SetOrthoZoom(now_zoom);
+		scene_cam_->SetOrthoZoom(now_zoom * Root::Ins().renderer()->content_scale());
 	}
 	
 	distance = now_distance;
@@ -388,6 +405,16 @@ void kaleApp::Shake()
 		
 		collision_bodys_[i]->SetLinearVelocity(b2Vec2(force.x, force.y));
 	}
+}
+
+void kaleApp::OnNotified(ERI::SceneMgr::ResizeInfo& info)
+{
+	float screen_width = info.width / cam_->ortho_zoom();
+	float screen_height = info.height / cam_->ortho_zoom();
+	
+	screen_dark_corner_mask_->SetSizeOffset(screen_width, screen_height);
+	black_mask_->SetSize(screen_width, screen_height);
+	menu_button_->RefreshScreenSize(screen_width, screen_height);
 }
 
 void kaleApp::SetIsAutoMode(bool is_auto_mode)
@@ -610,8 +637,8 @@ void kaleApp::ResetCollisionObjs(bool is_first_time /*= false*/)
 			glow_obj->BlendAdd();
 			glow_obj->SetDepthTest(false);
 			glow_obj->SetDepthWrite(false);
-			glow_obj->set_visible(false);
-			glow_obj->AddToScene(mask_layer_);
+			glow_obj->SetVisible(false);
+			glow_obj->AddToScene(LAYER_MASK);
 			obj->AddChild(glow_obj);
 			obj->set_glow_obj(glow_obj);
 		}
@@ -758,9 +785,9 @@ void kaleApp::UpdateAtmosphere(float delta_time)
 	
 	Color color;
 	atmosphere_texture_->GetPixelColor(color, atmosphere_u_ * atmosphere_texture_->width, atmosphere_v_blender_->current_value() * atmosphere_texture_->height);
-	Root::Ins().renderer()->SetBgColor(color * 0.0f);
 	
-	atmosphere_mask_->SetColor(color * 1.0f);
+	Root::Ins().renderer()->SetBgColor(color * 0.f);
+	atmosphere_mask_->SetColor(color * 1.f);
 	
 	//
 	

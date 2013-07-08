@@ -41,8 +41,6 @@ public:
 	void Show();
 	
 private:
-	kaleApp*				app_ref_;
-	
 	ERI::CameraActor*		mirror_cam_;
 	ERI::RenderToTexture*	mirror_texture_;
 	ERI::SpriteActor*		mirror_dark_corner_mask_;
