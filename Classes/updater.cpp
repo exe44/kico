@@ -14,7 +14,6 @@
 #include "scene_mgr.h"
 #include "scene_actor.h"
 #include "txt_actor.h"
-#include "audio_manager.h"
 
 #include "kale.h"
 #include "helper.h"
@@ -365,7 +364,7 @@ Menu::Menu(kaleApp* app) :
 	
 	txt2_ = new TxtActor("Futura", 14, true);
 	txt2_->SetResolutionScale(content_scale);
-	txt2_->SetTxt("© 2010 All rights reserved.");
+	txt2_->SetTxt("© 2013 All rights reserved.");
 	txt2_->AddToScene(LAYER_UI2);
 	txt2_->SetPos(Vector3(0, -80, 10));
 	txt2_->SetColor(Color(0.66f, 0.66f, 0.66f, 0));

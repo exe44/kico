@@ -14,7 +14,7 @@
 #include "scene_mgr.h"
 #include "scene_actor.h"
 #include "platform_helper.h"
-#include "audio_manager.h"
+#include "audio_mgr.h"
 
 #include "mirror_obj.h"
 #include "helper.h"
@@ -82,15 +82,16 @@ kaleApp::kaleApp() :
 
 kaleApp::~kaleApp()
 {
+	Release();
 }
 
 void kaleApp::Init()
 {
 	LoadOption();
 	
-	Hoimi::AudioManager::Instance().Initial();
-	Hoimi::AudioManager::Instance().SetSoundEffectsVolume(0.5f);
-	Hoimi::AudioManager::Instance().LoadSound("ding");
+	hikaru::AudioMgr::Ins().Init();
+	hikaru::AudioMgr::Ins().SetGlobalSoundVolume(0.5f);
+	hikaru::AudioMgr::Ins().LoadSound("media/ding.caf");
 	
 	Root::Ins().input_mgr()->set_handler(this);
 	
@@ -224,6 +225,8 @@ void kaleApp::Release()
 	delete light_;
 	delete scene_cam_;
 	delete cam_;
+	
+	hikaru::AudioMgr::KillIns();
 }
 
 void kaleApp::Update(float delta_time)

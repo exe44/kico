@@ -10,7 +10,8 @@
 #include "contact_listener.h"
 
 #include "math_helper.h"
-#include "audio_manager.h"
+
+#include "audio_mgr.h"
 
 #include "kale.h"
 #include "collision_obj.h"
@@ -52,7 +53,7 @@ void KaleContactListener::PreSolve(b2Contact* contact, const b2Manifold* oldMani
 			{
 				if (app_ref_->is_sound_on())
 				{
-					Hoimi::AudioManager::Instance().PlaySound("ding", (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
+					hikaru::AudioMgr::Ins().PlaySound("media/ding.caf", false, (approach_velocity - 0.33f) * 1.0f, RangeRandom(0.25f, 1.25f));
 				}
 				
 				objA->OnCollisionStart(approach_velocity);
