@@ -2,6 +2,8 @@ kico
 ====
 Just another kaleidoscope app.
 
+[Try it!](https://itunes.apple.com/us/app/kico/id396462544?mt=8)
+
 Build
 -----
 You will need to put:
